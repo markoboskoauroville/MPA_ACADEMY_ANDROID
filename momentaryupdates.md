@@ -29,3 +29,6 @@
 
 **Request 10.** Marko (10.11.2026): "please also at the bottom of every of my app which is published on the website put copyright Mantra Productions at the bottom of settings"
 **Status:** saved first (read as: a minimal settings screen, opened by tapping the MPA ACADEMY title, with the quiet centred line "© 2026 Mantra Productions" at its bottom).
+
+**Request 11.** Marko (10.11.2026): "please make sure in our MPA Academy page that this exercise is broken in two rows, not in one only"
+**Status:** saved first (read as: every phrase of PH01 shows its two bars as two lines of 8 cells, in the app in both orientations and on the website's exercise page).
