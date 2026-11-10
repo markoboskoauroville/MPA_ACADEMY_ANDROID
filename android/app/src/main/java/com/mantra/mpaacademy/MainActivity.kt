@@ -44,9 +44,9 @@ class MainActivity : Activity() {
     private var cells = ArrayList<CellsView>(); private var reps = ArrayList<TextView>()
     private var anim: ValueAnimator? = null
     private var want = 0f                         // where the play button wants to be, in stage pixels (before clamping)
-    private var curRow = 0
+    private var curRow = 0; private var curLine = 0
     private var ticker: Runnable? = null
-    private var lr = -1; private var lj = -1; private var lastRow = -1
+    private var lr = -1; private var lj = -1; private var lastRow = -1; private var lastLine = -1
 
     private fun tf(id: Int) = resources.getFont(id)
 
@@ -164,8 +164,8 @@ class MainActivity : Activity() {
     private fun openPlayer(e: Exercise, keepScroll: Boolean = false) {
         val was = sv?.scrollY ?: 0
         val wasPlaying = player != null
-        if (!keepScroll) { stopPlay(); curRow = 0; lastRow = -1 } else { ticker?.let { root.removeCallbacks(it) }; ticker = null }
-        if (keepScroll) { lr = -1; lj = -1; lastRow = -1 }
+        if (!keepScroll) { stopPlay(); curRow = 0; curLine = 0; lastRow = -1; lastLine = -1 } else { ticker?.let { root.removeCallbacks(it) }; ticker = null }
+        if (keepScroll) { lr = -1; lj = -1; lastRow = -1; lastLine = -1 }
         cur = e; root.removeAllViews()
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         box.addView(topBar())
@@ -241,7 +241,7 @@ class MainActivity : Activity() {
         scroll.setOnScrollChangeListener { _, _, _, _, _ -> if (anim == null) applyBtn() }
         scroll.post {
             if (keepScroll) scroll.scrollTo(0, was)
-            setBtn(want = btnWantFor(if (player != null) curRow else 0)); if (wasPlaying && player != null) startTicker()
+            setBtn(want = btnWantFor(if (player != null) curRow else 0, if (player != null) curLine else 0)); if (wasPlaying && player != null) startTicker()
         }
     }
 
@@ -251,8 +251,8 @@ class MainActivity : Activity() {
     // "the reading line is the vertical MIDDLE of the visible viewport; the play button is always clamped inside the visible area;
     //  prompter on scrolls the current row's centre to the middle line (smooth, 380 ms); off only scrolls when the row is out of view."
     private fun yIn(parent: View, v: View): Float { var y = 0f; var x: View? = v; while (x != null && x !== parent) { y += x.top; x = x.parent as? View }; return y }
-    private fun rowCenter(r: Int): Float { val s = stage ?: return 0f; val c = cells.getOrNull(r) ?: return 0f; return yIn(s, c) + c.height / 2f }   // stage px
-    private fun btnWantFor(r: Int) = rowCenter(r) - dpf(22f)
+    private fun rowCenter(r: Int, line: Int = 0): Float { val s = stage ?: return 0f; val c = cells.getOrNull(r) ?: return 0f; return yIn(s, c) + c.lineCenter(line) }   // stage px: the centre of the LINE being played
+    private fun btnWantFor(r: Int, line: Int = 0) = rowCenter(r, line) - dpf(22f)
     private fun clampBtn(raw: Float): Float {      // inside the viewport and inside its own pattern (site: clampTop)
         val s = sv ?: return raw; val st = stage ?: return raw
         val top = s.scrollY - stageTop()
@@ -262,14 +262,14 @@ class MainActivity : Activity() {
     private fun stageTop(): Float = (stage?.top ?: 0).toFloat()
     private fun setBtn(want: Float) { this.want = want; applyBtn() }
     private fun applyBtn() { val b = playV ?: return; b.translationY = Math.round(clampBtn(want)).toFloat() }
-    private fun midScroll(r: Int, smooth: Boolean) {
-        val s = sv ?: return; val c = rowCenter(r) + stageTop() - s.scrollY   // viewport y of the row centre
+    private fun midScroll(r: Int, smooth: Boolean, line: Int = 0) {
+        val s = sv ?: return; val c = rowCenter(r, line) + stageTop() - s.scrollY   // viewport y of the row centre
         val dy = c - s.height / 2f; if (Math.abs(dy) > 1f) { if (smooth) s.smoothScrollBy(0, dy.toInt()) else s.scrollBy(0, dy.toInt()) }
     }
-    private fun moveTo(r: Int) {
+    private fun moveTo(r: Int, line: Int) {
         val s = sv ?: return; anim?.cancel()
-        val b0 = want; val b1 = btnWantFor(r); val s0 = s.scrollY
-        val c = rowCenter(r) + stageTop() - s0; val H = s.height
+        val b0 = want; val b1 = btnWantFor(r, line); val s0 = s.scrollY
+        val c = rowCenter(r, line) + stageTop() - s0; val H = s.height
         val dy = if (tele) c - H / 2f else (if (c < dpf(30f) || c > H - dpf(30f)) c - H / 2f else 0f)
         val maxS = (s.getChildAt(0).height - H).coerceAtLeast(0)
         val target = (s0 + dy).coerceIn(0f, maxS.toFloat())
@@ -288,7 +288,7 @@ class MainActivity : Activity() {
 
     private fun startPlay(e: Exercise) {
         val p = Player(e, Bank(this, if (voice) "voice" else "drum"), speed) {}
-        player = p; playV?.on = true; curRow = 0; lastRow = -1; lr = -1; lj = -1
+        player = p; playV?.on = true; curRow = 0; curLine = 0; lastRow = -1; lastLine = -1; lr = -1; lj = -1
         setBtn(btnWantFor(0)); if (tele) { midScroll(0, false); applyBtn() }     // site: placePlay(el,0); midScroll(el,0,false)
         p.start(); startTicker()
     }
@@ -303,10 +303,9 @@ class MainActivity : Activity() {
                         if (lr in cells.indices) cells[lr].lit = -1
                         cells.getOrNull(r)?.lit = j; lr = r; lj = j
                     }
-                    if (r != lastRow) {
-                        if (lastRow in reps.indices) reps[lastRow].text = ""
-                        lastRow = r; curRow = r; moveTo(r)
-                    }
+                    val line = j / (cells.getOrNull(r)?.cols ?: 8)
+                    if (r != lastRow) { if (lastRow in reps.indices) reps[lastRow].text = ""; lastRow = r }
+                    if (r != curRow || line != lastLine) { curRow = r; curLine = line; lastLine = line; moveTo(r, line) }
                     reps.getOrNull(r)?.text = "$rep / ${e.loops}"
                 }
                 root.postDelayed(this, 16)

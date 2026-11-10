@@ -49,7 +49,7 @@ fun phrInfo(rows: List<List<String>>): List<PhrInfo> {
 }
 
 /** One row of cells, drawn like the site: 1 px ink border, accent = inset 3 px bar, number above, spoon under, lit = amber. */
-class CellsView(ctx: Context, private val row: List<String>, private val sp: IntArray, private val cols: Int,
+class CellsView(ctx: Context, private val row: List<String>, private val sp: IntArray, val cols: Int,
                 private val fLetter: Typeface, private val fMono: Typeface) : View(ctx) {
     var lit = -1
         set(v) { if (v != field) { field = v; invalidate() } }
@@ -84,8 +84,8 @@ class CellsView(ctx: Context, private val row: List<String>, private val sp: Int
             c.drawText("${sp[j]}", x + cw / 2, top + ch + 3 * d + 10 * d, num)
         }
     }
-    /** vertical centre of the whole block (the reading point of the teleprompter) */
-    fun centerY() = top + height / 2f
+    /** vertical centre of one line of cells, inside this view (the marker sits on the line being played) */
+    fun lineCenter(l: Int) = l * pitch() + numH + ch / 2f
 }
 
 /** The round play button: 44 px, amber ring, the triangle of the site (36.67 27, 36.67 73, 76.67 50 in a 100 box). */
