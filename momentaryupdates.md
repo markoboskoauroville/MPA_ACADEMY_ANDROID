@@ -32,3 +32,6 @@
 
 **Request 11.** Marko (10.11.2026): "please make sure in our MPA Academy page that this exercise is broken in two rows, not in one only"
 **Status:** saved first (read as: every phrase of PH01 shows its two bars as two lines of 8 cells, in the app in both orientations and on the website's exercise page).
+
+## Request 12 (10.11.2026)
+Marko, verbatim: "Please update my application called MPA Academy for Android. First of all, next to MPA Academy title, I want to have the current exercise I am in: 6 + 2, 5 + 3, and so on. So numbers are going up. And then I want to have only one exercise in the view. So there is a whole row of many, many different exercises. So my user interface is showing me only 1 in 2 rows. The rest is hidden from the view. And then we go one after the other. We always practice in sequence, never jumping over sequence of exercises. Please update this app."
