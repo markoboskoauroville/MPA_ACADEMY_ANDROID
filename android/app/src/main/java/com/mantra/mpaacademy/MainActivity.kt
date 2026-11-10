@@ -135,21 +135,22 @@ class MainActivity : Activity() {
     private fun speedsView(e: Exercise): View {   // the site's speed control: 16/1 | 16/2 | 16/4 | 16/8 | 16/16 | 16/32, default 16/4
         val f = Flow(this, 0, 0)
         for ((k, v) in listOf(1, 2, 4, 8, 16, 32).withIndex()) {
-            if (k > 0) f.addView(bar().apply { setPadding(dp(1), 0, dp(1), 0) })
-            f.addView(pipe(frac(16, v), v == speed) { speed = v; openPlayer(e, true); restartIfPlaying() }.apply { setPadding(dp(3), dp(4), dp(3), dp(4)); minimumWidth = dp(40) })
+            if (k > 0) f.addView(bar().apply { setPadding(0, 0, 0, 0) })
+            f.addView(pipe(frac(16, v), v == speed) { speed = v; openPlayer(e, true); restartIfPlaying() }.apply { setPadding(dp(2), dp(4), dp(2), dp(4)); minimumWidth = dp(34); textSize = 16f })
         }
         return f
     }
     private fun loopsView(e: Exercise): View {    // repetitions of every part, changeable live (0 = forever)
         val f = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-        val n = TextView(this).apply { textSize = 18f; typeface = fCond; setTextColor(AMBER2); gravity = Gravity.CENTER; minimumWidth = dp(34) }
+        val n = TextView(this).apply { textSize = 18f; typeface = fCond; setTextColor(AMBER2); gravity = Gravity.CENTER }
+        val lab = TextView(this).apply { text = "LOOPS"; textSize = 10f; typeface = fCondS; setTextColor(DIM); letterSpacing = 0.08f; gravity = Gravity.CENTER }
+        val mid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; minimumWidth = dp(46); addView(lab); addView(n) }
         fun show() { n.text = if (e.loops == 0) "\u221E" else "${e.loops}" }
         fun set(v: Int) { e.loops = v.coerceIn(0, 99); getPreferences(MODE_PRIVATE).edit().putInt("loops", e.loops).apply(); show() }
         show()
-        f.addView(label("Loops:").apply { setPadding(0, 0, dp(6), 0) })
-        f.addView(pipe("\u2212", false) { set(if (e.loops == 0) 99 else e.loops - 1) }.apply { textSize = 22f })
-        f.addView(n)
-        f.addView(pipe("+", false) { set(if (e.loops >= 99) 0 else e.loops + 1) }.apply { textSize = 22f })
+        f.addView(pipe("\u2212", false) { set(if (e.loops == 0) 99 else e.loops - 1) }.apply { textSize = 22f; minimumWidth = dp(40) })
+        f.addView(mid)
+        f.addView(pipe("+", false) { set(if (e.loops >= 99) 0 else e.loops + 1) }.apply { textSize = 22f; minimumWidth = dp(40) })
         return f
     }
     private fun topBar(e: Exercise? = null): View {
