@@ -72,7 +72,7 @@ class MainActivity : Activity() {
             val i = w.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
             padL = i.left + dp(16); padR = i.right + dp(16)
             v.setPadding(padL, i.top + dp(8), padR, i.bottom + dp(16))
-            val W = resources.displayMetrics.widthPixels
+            val W = (resources.configuration.screenWidthDp * d).toInt()
             if (W != lastW) { lastW = W; build() }
             w
         }
@@ -202,7 +202,7 @@ class MainActivity : Activity() {
             stopPlay()
         } else {
             val gutter = dp(52)
-            val availW = resources.displayMetrics.widthPixels - padL - padR - gutter
+            val availW = (resources.configuration.screenWidthDp * d).toInt() - padL - padR - gutter
             val inlineCols = (availW - dp(110) - dp(60)) / 16 >= dp(36)       // landscape: label, 16 cells, counter on one line
             val rowsBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(gutter, dp(14), 0, 0) }
             val info = phrInfo(e.rows)
