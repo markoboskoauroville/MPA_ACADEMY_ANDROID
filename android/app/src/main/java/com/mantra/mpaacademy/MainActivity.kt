@@ -69,6 +69,17 @@ class MainActivity : Activity() {
             v.setPadding(i.left + dp(16), i.top + dp(16), i.right + dp(16), i.bottom + dp(16)); w
         }
         home()
+        if (intent.getBooleanExtra("pin", false)) pinIcon()
+    }
+
+    /** Asks the launcher to put this app's icon on the home screen (adb: am start --ez pin true). */
+    private fun pinIcon() {
+        val sm = getSystemService(android.content.pm.ShortcutManager::class.java)
+        if (!sm.isRequestPinShortcutSupported) return
+        val i = android.content.Intent(this, MainActivity::class.java).setAction(android.content.Intent.ACTION_MAIN)
+        val info = android.content.pm.ShortcutInfo.Builder(this, "mpa-home")
+            .setShortLabel("MPA Academy").setIcon(android.graphics.drawable.Icon.createWithResource(this, android.R.drawable.ic_media_play)).setIntent(i).build()
+        sm.requestPinShortcut(info, null)
     }
 
     private fun home() {
