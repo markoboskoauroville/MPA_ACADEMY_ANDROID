@@ -50,3 +50,6 @@ Marko, verbatim: "Upper row, upper frame should be only one line. Please remove 
 
 ## Request 16 follow-up (10.11.2026)
 Portrait: the one-line upper frame is compact (V | D, no LOOPS caption, no bars, rotate icon) so everything fits.
+
+## Request 17 (10.11.2026)
+Marko, verbatim: "The way to reduce use space for speed, only put arrow on the left side of the speed and then on the right side of the speed and display only one speed. So I can scroll through speeds without needing so many buttons on screen. And also to reduce the space this one over something or whatever number over something is using, make it like a real division. I mean the horizontal line, one number is at the top, exactly horizontal line and another at the bottom. Not this slash, straight line. In that way it will take less space."

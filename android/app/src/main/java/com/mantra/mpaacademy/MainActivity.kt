@@ -143,12 +143,19 @@ class MainActivity : Activity() {
             s.setSpan(RelativeSizeSpan(1.35f), s.length - lab.length, s.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
         text = s; textSize = 18f; typeface = fCond; setTextColor(INK); letterSpacing = 0.06f; minHeight = dp(48); gravity = Gravity.CENTER_VERTICAL; background = pressBg(d, 0x33F59E0B, 0, 6f); setOnClickListener { settings() } }
-    private fun speedsView(e: Exercise): View {   // the site's speed control: 16/1 | 16/2 | 16/4 | 16/8 | 16/16 | 16/32, default 16/4
-        val f = Flow(this, 0, 0)
-        for ((k, v) in listOf(1, 2, 4, 8, 16, 32).withIndex()) {
-            if (k > 0) f.addView(bar().apply { setPadding(0, 0, 0, 0) })
-            f.addView(pipe(frac(16, v), v == speed) { speed = v; openPlayer(e, true); restartIfPlaying() }.apply { setPadding(dp(2), dp(4), dp(2), dp(4)); minimumWidth = dp(34); textSize = 16f })
-        }
+    private fun speedsView(e: Exercise): View {   // request 17: ◀ one speed ▶, the speed as a real stacked fraction (16 over a straight line over 4)
+        val all = listOf(1, 2, 4, 8, 16, 32)
+        val f = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
+        fun step(k: Int) { val i = (all.indexOf(speed).coerceAtLeast(0) + k).coerceIn(0, all.size - 1); if (all[i] != speed) { speed = all[i]; openPlayer(e, true); restartIfPlaying() } }
+        val i = all.indexOf(speed)
+        f.addView(pipe("\u25C0", i > 0) { step(-1) }.apply { textSize = 16f; minimumWidth = dp(36); setPadding(dp(2), dp(4), dp(2), dp(4)) })
+        val frac = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; setPadding(dp(4), 0, dp(4), 0) }
+        fun num(n: Int) = TextView(this).apply { text = "$n"; textSize = 15f; typeface = fCond; setTextColor(AMBER2); gravity = Gravity.CENTER; includeFontPadding = false }
+        frac.addView(num(16))
+        frac.addView(View(this).apply { setBackgroundColor(AMBER2) }, LinearLayout.LayoutParams(dp(22), dp(2)).apply { topMargin = dp(2); bottomMargin = dp(2) })
+        frac.addView(num(speed))
+        f.addView(frac, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(2); marginEnd = dp(2) })
+        f.addView(pipe("\u25B6", i < all.size - 1) { step(1) }.apply { textSize = 16f; minimumWidth = dp(36); setPadding(dp(2), dp(4), dp(2), dp(4)) })
         return f
     }
     private fun loopsView(e: Exercise): View {    // repetitions of every part, changeable live (0 = forever)
@@ -184,7 +191,7 @@ class MainActivity : Activity() {
             val lab = phrInfo(e.rows).getOrNull(showRow)?.lab ?: ""
             row.addView(TextView(this).apply { text = lab; textSize = if (portrait) 20f else 24f; typeface = fCond; setTextColor(AMBER); gravity = Gravity.CENTER_VERTICAL; minHeight = dp(48); includeFontPadding = false })
             row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
-            row.addView(speedsView(e).also { shrink(it) })
+            row.addView(speedsView(e))
             row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
             row.addView(loopsView(e))
             row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
