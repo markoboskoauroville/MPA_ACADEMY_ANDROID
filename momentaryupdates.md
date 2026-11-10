@@ -35,3 +35,6 @@
 
 ## Request 12 (10.11.2026)
 Marko, verbatim: "Please update my application called MPA Academy for Android. First of all, next to MPA Academy title, I want to have the current exercise I am in: 6 + 2, 5 + 3, and so on. So numbers are going up. And then I want to have only one exercise in the view. So there is a whole row of many, many different exercises. So my user interface is showing me only 1 in 2 rows. The rest is hidden from the view. And then we go one after the other. We always practice in sequence, never jumping over sequence of exercises. Please update this app."
+
+## Request 13 (10.11.2026)
+Marko, verbatim: "since these numbers (3 plus 5, etc.) are showing at the top, I don't need to have it down there"

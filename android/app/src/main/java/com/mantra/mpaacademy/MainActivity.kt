@@ -278,7 +278,8 @@ class MainActivity : Activity() {
             }
             pat = rowsBox
             st.addView(rowsBox, FrameLayout.LayoutParams(-1, -2))
-            labs.forEach { st.addView(it, FrameLayout.LayoutParams(-2, -2)) }
+            // request 13: the phrase label ("3+5") is only in the title now, not beside the cells
+            labs.clear()
             val pv = PlayView(this).apply { contentDescription = "Play"; setOnClickListener { togglePlay(e) } }
             st.addView(pv, FrameLayout.LayoutParams(dp(44), dp(44)))
             playV = pv
