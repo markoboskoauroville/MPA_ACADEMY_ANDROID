@@ -14,3 +14,9 @@
 
 **Request 5.** Marko (10.11.2026): "so teleprompter is default behavior, read about what that means in manifests, skills, takeovers, etc"
 **Status:** saved first.
+
+**Request 6.** Marko (10.11.2026): "Our MPA Academy application teleprompter show exactly the row playing. Now it's in between two. Let it be in the front of the row itself, not in between rows."
+**Status:** saved first (read as: the play marker sits on the line being played, level with it, never between two lines).
+
+**Request 7.** Marko (10.11.2026): "So for example if there are only two rows which is very nice in landscape mode then the rows are not moving. The play button is moving."
+**Status:** saved first (read as: rows scroll only when needed; when the rows fit, they stay still and the marker moves from row to row).
