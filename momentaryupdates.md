@@ -5,3 +5,6 @@
 
 **Request 2.** Marko (10.11.2026): "now you have Pixel Phone 7 connected over cable and use it to test instead of virtual machine"
 **Status:** saved; the app is tested on the real Pixel 7.
+
+**Request 3.** Marko (10.11.2026): "please any you are testing on Pixel 7 leave its icon on the desktop"
+**Status:** saved; the app stays installed on the Pixel 7, icon on the home screen, never uninstalled.
