@@ -31,8 +31,8 @@ class MainActivity : Activity() {
 
     // state kept across rotation
     private var cur: Exercise? = null
-    private var speed = 4; private var voice = false; private var notesOn = false
-    private var tele = true                       // TELEPROMPTER is the default (requests 217-221, 4/5 of 10.11.2026)
+    private var speed = 4; private var voice = true; private var notesOn = false   // request 14: VOICE by default, no notes
+    private var tele = true                       // TELEPROMPTER always on (request 14: no switch)
     private var player: Player? = null
     private var padL = 0; private var padR = 0; private var lastW = -1
 
@@ -56,7 +56,7 @@ class MainActivity : Activity() {
         super.onCreate(b)
         fBody = tf(R.font.barlow_regular); fBodyM = tf(R.font.barlow_medium); fCond = tf(R.font.barlow_condensed_bold)
         fCondS = tf(R.font.barlow_condensed_semibold); fMono = tf(R.font.plex_mono)
-        tele = getPreferences(MODE_PRIVATE).getBoolean("tele", true)
+        tele = true
         val j = JSONObject(assets.open("exercises.json").bufferedReader().readText())
         val ca = j.getJSONArray("categories")
         for (i in 0 until ca.length()) {
@@ -136,7 +136,8 @@ class MainActivity : Activity() {
     private fun titleView(e: Exercise? = null) = TextView(this).apply {
         // request 12: the current phrase ("6+2") sits next to the title
         val lab = e?.let { phrInfo(it.rows).getOrNull(showRow)?.lab }
-        val s = SpannableString(if (lab.isNullOrEmpty()) "MPA ACADEMY" else "MPA ACADEMY   $lab")
+        val head = e?.name?.uppercase() ?: "MPA ACADEMY"              // request 14: the exercise's name is the title in the player
+        val s = SpannableString(if (lab.isNullOrEmpty()) head else "$head   $lab")
         if (!lab.isNullOrEmpty()) {
             s.setSpan(android.text.style.ForegroundColorSpan(AMBER), s.length - lab.length, s.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             s.setSpan(RelativeSizeSpan(1.35f), s.length - lab.length, s.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
@@ -163,22 +164,24 @@ class MainActivity : Activity() {
         f.addView(pipe("+", false) { set(if (e.loops >= 99) 0 else e.loops + 1) }.apply { textSize = 22f; minimumWidth = dp(40) })
         return f
     }
+    private fun soundView(e: Exercise): View {     // request 14: VOICE | DRUM lives in the top frame
+        val f = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
+        f.addView(pipe("VOICE", voice) { voice = true; openPlayer(e, true); restartIfPlaying() })
+        f.addView(bar())
+        f.addView(pipe("DRUM", !voice) { voice = false; openPlayer(e, true); restartIfPlaying() })
+        return f
+    }
     private fun topBar(e: Exercise? = null): View {
-        val landscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        // request 14: every control is in the top frame; the lower frame shows only the exercise
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val row = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(0, dp(6), 0, dp(6)) }
         row.addView(titleView(e), LinearLayout.LayoutParams(0, -2, 1f))
-        if (e != null && landscape) {
-            row.addView(speedsView(e), LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dp(16) })
-            row.addView(loopsView(e), LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dp(16) })
-        }
         row.addView(orientPill())
         col.addView(row)
-        if (e != null && !landscape) {
-            val r2 = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-            r2.addView(speedsView(e), LinearLayout.LayoutParams(0, -2, 1f))
-            r2.addView(loopsView(e), LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(8) })
-            col.addView(r2)
+        if (e != null) {
+            val r2 = Flow(this, dp(16), dp(4))
+            r2.addView(speedsView(e)); r2.addView(loopsView(e)); r2.addView(soundView(e))
+            col.addView(r2, LinearLayout.LayoutParams(-1, -2))
         }
         col.addView(View(this).apply { setBackgroundColor(LINE); layoutParams = LinearLayout.LayoutParams(-1, 1) })
         return col
@@ -192,9 +195,6 @@ class MainActivity : Activity() {
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(16), 0, dp(16)) }
         col.addView(label("Settings"))
         val r = Flow(this, dp(12), 0)
-        r.addView(label("Prompter (the page follows the row being played):").apply { minHeight = dp(48); gravity = Gravity.CENTER_VERTICAL })
-        r.addView(pill(if (tele) "On" else "Off", tele) { tele = !tele; getPreferences(MODE_PRIVATE).edit().putBoolean("tele", tele).apply(); settings() })
-        col.addView(r, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) })
         col.addView(label("Version ${packageManager.getPackageInfo(packageName, 0).versionName}").apply { setPadding(0, dp(12), 0, 0) })
         col.addView(pill("Back", true) { if (cur != null) openPlayer(cur!!) else home() }.apply { alpha = 1f }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(16) })
         box.addView(ScrollView(this).apply { addView(col); isVerticalScrollBarEnabled = false }, LinearLayout.LayoutParams(-1, 0, 1f))
@@ -237,24 +237,8 @@ class MainActivity : Activity() {
         cur = e; root.removeAllViews()
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         box.addView(topBar(e))
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(12), 0, dp(40)) }
-        // head: back, code, title, PROMPTER, NOTES
-        val head = Flow(this, dp(10), dp(4))
-        head.addView(pipe("◀", true) { home() }.apply { setTextColor(AMBER); textSize = 16f })
-        head.addView(codeTag(e.code).apply { translationY = dpf(0f) })
-        head.addView(TextView(this).apply { text = e.name.uppercase(); textSize = 18f; typeface = fCond; setTextColor(INK); letterSpacing = 0.06f; minHeight = dp(48); gravity = Gravity.CENTER_VERTICAL })
-        head.addView(pill("Prompter", tele) { tele = !tele; getPreferences(MODE_PRIVATE).edit().putBoolean("tele", tele).apply(); openPlayer(e, true) })
-        head.addView(pill(if (notesOn) "Cells" else "Notes", notesOn) { notesOn = !notesOn; openPlayer(e, true) })
-        col.addView(head)
-        // base speed | sound
-        val r1 = Flow(this, dp(8), 0)
-        r1.addView(label("Base speed:").apply { minHeight = dp(48); gravity = Gravity.CENTER_VERTICAL })
-        r1.addView(TextView(this).apply { text = "${e.base}"; textSize = 18f; typeface = fCond; setTextColor(INK); minHeight = dp(48); gravity = Gravity.CENTER_VERTICAL })
-        r1.addView(bar("||"))
-        r1.addView(pipe("VOICE", voice) { voice = true; openPlayer(e, true); restartIfPlaying() })
-        r1.addView(bar())
-        r1.addView(pipe("DRUM", !voice) { voice = false; openPlayer(e, true); restartIfPlaying() })
-        col.addView(r1)
+        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(4), 0, dp(40)) }
+        // request 14: the lower frame shows only the exercise (no head, no prompter/notes, base speed fixed and hidden)
         // the pattern (or the notes)
         stage = FrameLayout(this); cells = ArrayList(); labs = ArrayList(); playV = null; pat = null
         val st = stage!!
