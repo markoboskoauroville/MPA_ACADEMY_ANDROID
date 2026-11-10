@@ -6,7 +6,7 @@ import android.media.AudioFormat
 import android.media.AudioTrack
 
 /** One exercise: rows of cells, each row played `loops` times, then the next row, round and round. */
-class Exercise(val code: String, val name: String, val base: Int, val loops: Int, val notes: String, val rows: List<List<String>>)
+class Exercise(val code: String, val name: String, val base: Int, @Volatile var loops: Int, val notes: String, val rows: List<List<String>>)   // loops: 0 = forever; read live every cell
 
 /** Pre-mixed strokes, 16 bit mono 48 kHz, the site's own samples. */
 class Bank(ctx: Context, set: String) {
@@ -56,7 +56,8 @@ class Player(private val ex: Exercise, private val bank: Bank, speed: Int, priva
             val out = ShortArray(stepFrames)
             var frame = 0L; var r = 0
             while (!stopped) {
-                for (rep in 1..ex.loops) {
+                var rep = 1
+                while (ex.loops == 0 || rep <= ex.loops) {
                     val row = ex.rows[r]
                     for (j in row.indices) {
                         if (stopped) return@Thread
@@ -69,6 +70,7 @@ class Player(private val ex: Exercise, private val bank: Bank, speed: Int, priva
                         track.write(out, 0, stepFrames)
                         frame += stepFrames
                     }
+                    rep++
                 }
                 r = (r + 1) % ex.rows.size
             }

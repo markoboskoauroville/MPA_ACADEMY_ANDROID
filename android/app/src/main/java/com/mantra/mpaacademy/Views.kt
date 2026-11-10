@@ -60,6 +60,7 @@ class CellsView(ctx: Context, private val row: List<String>, private val sp: Int
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val txt = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER; typeface = fLetter }
     private val num = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER; typeface = fMono; color = DIM; textSize = 10 * d }
+    fun lineCount() = lines
     private fun pitch() = ch + 2 * numH + 6 * d
     private val lines get() = (row.size + cols - 1) / cols
     override fun onMeasure(w: Int, h: Int) {
