@@ -172,20 +172,29 @@ class MainActivity : Activity() {
         return f
     }
     private fun topBar(e: Exercise? = null): View {
-        // request 14: every control is in the top frame; the lower frame shows only the exercise
+        // request 16: the upper frame is ONE line: phrase label, speeds, loops, voice | drum, portrait/landscape (no exercise title)
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        val row = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(0, dp(6), 0, dp(6)) }
-        row.addView(titleView(e), LinearLayout.LayoutParams(0, -2, 1f))
-        row.addView(orientPill())
-        col.addView(row)
-        if (e != null) {
-            val r2 = Flow(this, dp(16), dp(4))
-            r2.addView(speedsView(e)); r2.addView(loopsView(e)); r2.addView(soundView(e))
-            col.addView(r2, LinearLayout.LayoutParams(-1, -2))
+        val row = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(0, dp(4), 0, dp(4)) }
+        if (e == null) {
+            row.addView(titleView(), LinearLayout.LayoutParams(0, -2, 1f))
+            row.addView(orientPill())
+        } else {
+            val lab = phrInfo(e.rows).getOrNull(showRow)?.lab ?: ""
+            row.addView(TextView(this).apply { text = lab; textSize = 24f; typeface = fCond; setTextColor(AMBER); gravity = Gravity.CENTER_VERTICAL; minHeight = dp(48); includeFontPadding = false })
+            row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
+            row.addView(speedsView(e).also { shrink(it) })
+            row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
+            row.addView(loopsView(e))
+            row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
+            row.addView(soundView(e))
+            row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
+            row.addView(orientPill().apply { (this as TextView).minHeight = dp(40); setPadding(dp(10), dp(2), dp(10), dp(2)) })
         }
+        col.addView(row)
         col.addView(View(this).apply { setBackgroundColor(LINE); layoutParams = LinearLayout.LayoutParams(-1, 1) })
         return col
     }
+    private fun shrink(v: View) { if (v is ViewGroup) for (i in 0 until v.childCount) { val c = v.getChildAt(i); if (c is TextView) { c.minimumWidth = dp(26); c.setPadding(dp(1), 0, dp(1), 0) } } }
 
     // ------------------------------------------------------------------ settings (tap the title): one switch and, at the bottom, the copyright line
     private fun settings() {

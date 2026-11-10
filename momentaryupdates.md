@@ -44,3 +44,6 @@ Marko, verbatim: "Please continue development of my MPA Academy. Application Fro
 
 ## Request 15 (10.11.2026)
 Marko, verbatim: "also, I don't need to see anywhere in the interface PH01 the code for the exercise"
+
+## Request 16 (10.11.2026)
+Marko, verbatim: "Upper row, upper frame should be only one line. Please remove the title of exercise and move everything to one line."
