@@ -41,3 +41,6 @@ Marko, verbatim: "since these numbers (3 plus 5, etc.) are showing at the top, I
 
 ## Request 14 (10.11.2026)
 Marko, verbatim: "Please continue development of my MPA Academy. Application From lower frame computer. Completely remove all the text except The showing the exercise. Voice by default will be. Actually you need to move the voice so all what is what is um Uh down is to go up, but some things we don't need. Prompter is the mode which is always there remove. Notes we don't have remove. At the top MPA Academy remove and put basic phrasing over Malfuf One. That will be the title of exercise at the at the frame above. Bass speed is fixed, not n doesn't need to change. So voice and drum is also coming in the upper frame. So So in a lower frame only exercise is showing. And the play button jumping from one row to the other. So all information is at the top frame, exercise is a down frame. And uh that's the update."
+
+## Request 15 (10.11.2026)
+Marko, verbatim: "also, I don't need to see anywhere in the interface PH01 the code for the exercise"

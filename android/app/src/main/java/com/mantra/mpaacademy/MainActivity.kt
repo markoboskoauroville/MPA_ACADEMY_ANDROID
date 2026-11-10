@@ -217,8 +217,8 @@ class MainActivity : Activity() {
             for (e in list) {
                 val r = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; minimumHeight = dp(56); setPadding(dp(12), dp(8), dp(12), dp(8)); isClickable = true
                     background = pressBg(d, 0x33F59E0B, LINE, 6f); setOnClickListener { openPlayer(e) } }
-                r.addView(codeTag(e.code))
-                r.addView(TextView(this).apply { text = e.name.uppercase(); textSize = 18f; typeface = fCond; setTextColor(INK); letterSpacing = 0.06f; setPadding(dp(10), 0, 0, 0) })
+                // request 15: no exercise code (PH01) anywhere in the interface
+                r.addView(TextView(this).apply { text = e.name.uppercase(); textSize = 18f; typeface = fCond; setTextColor(INK); letterSpacing = 0.06f })
                 col.addView(r, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) })
             }
         }
