@@ -78,7 +78,7 @@ class MainActivity : Activity() {
         if (!sm.isRequestPinShortcutSupported) return
         val i = android.content.Intent(this, MainActivity::class.java).setAction(android.content.Intent.ACTION_MAIN)
         val info = android.content.pm.ShortcutInfo.Builder(this, "mpa-home")
-            .setShortLabel("MPA Academy").setIcon(android.graphics.drawable.Icon.createWithResource(this, android.R.drawable.ic_media_play)).setIntent(i).build()
+            .setShortLabel("MPA Academy").setIcon(android.graphics.drawable.Icon.createWithResource(this, R.mipmap.ic_launcher)).setIntent(i).build()
         sm.requestPinShortcut(info, null)
     }
 

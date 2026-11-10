@@ -11,3 +11,5 @@ custom:PHRASING, base 20, 16 rows of 2 bars, each row twice). Data: android/app/
 Build: only GitHub Actions (.github/workflows/android.yml), on a push to main, release v<appVersion> (android/gradle.properties) Latest,
 signed with the secret ANDROID_DEBUG_KEYSTORE_B64. Never gradlew on the Mac. Public and unpromoted: no README, no description.
 Sound: the site's own samples, streamed through AudioTrack; the light follows playbackHeadPosition.
+
+v2 (10.11.2026): `am start -n com.mantra.mpaacademy/.MainActivity --ez pin true` asks the launcher (Nova) to pin the icon to the home screen (ShortcutManager.requestPinShortcut, the launcher shows its own Add dialog). v3: own adaptive launcher icon (the academy's frame-drum mark from the site's favicon.svg on #0B0D10, plus a monochrome layer), used for the pinned shortcut too.
