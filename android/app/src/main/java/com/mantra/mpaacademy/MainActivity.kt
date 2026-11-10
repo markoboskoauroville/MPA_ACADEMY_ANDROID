@@ -131,7 +131,7 @@ class MainActivity : Activity() {
             requestedOrientation = if (landscape) ActivityInfo.SCREEN_ORIENTATION_PORTRAIT else ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         }.apply { alpha = 1f; contentDescription = "Switch to " + (if (landscape) "portrait" else "landscape") }
     }
-    private fun titleView() = TextView(this).apply { text = "MPA ACADEMY"; textSize = 18f; typeface = fCond; setTextColor(INK); letterSpacing = 0.06f }
+    private fun titleView() = TextView(this).apply { text = "MPA ACADEMY"; textSize = 18f; typeface = fCond; setTextColor(INK); letterSpacing = 0.06f; minHeight = dp(48); gravity = Gravity.CENTER_VERTICAL; background = pressBg(d, 0x33F59E0B, 0, 6f); setOnClickListener { settings() } }
     private fun speedsView(e: Exercise): View {   // the site's speed control: 16/1 | 16/2 | 16/4 | 16/8 | 16/16 | 16/32, default 16/4
         val f = Flow(this, 0, 0)
         for ((k, v) in listOf(1, 2, 4, 8, 16, 32).withIndex()) {
@@ -173,11 +173,30 @@ class MainActivity : Activity() {
         return col
     }
 
-    private fun build() { if (cur == null) home() else openPlayer(cur!!, keepScroll = true) }
+    // ------------------------------------------------------------------ settings (tap the title): one switch and, at the bottom, the copyright line
+    private fun settings() {
+        inSettings = true; stopPlay(); root.removeAllViews(); sv = null
+        val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        box.addView(topBar())
+        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(16), 0, dp(16)) }
+        col.addView(label("Settings"))
+        val r = Flow(this, dp(12), 0)
+        r.addView(label("Prompter (the page follows the row being played):").apply { minHeight = dp(48); gravity = Gravity.CENTER_VERTICAL })
+        r.addView(pill(if (tele) "On" else "Off", tele) { tele = !tele; getPreferences(MODE_PRIVATE).edit().putBoolean("tele", tele).apply(); settings() })
+        col.addView(r, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) })
+        col.addView(label("Version ${packageManager.getPackageInfo(packageName, 0).versionName}").apply { setPadding(0, dp(12), 0, 0) })
+        col.addView(pill("Back", true) { if (cur != null) openPlayer(cur!!) else home() }.apply { alpha = 1f }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(16) })
+        box.addView(ScrollView(this).apply { addView(col); isVerticalScrollBarEnabled = false }, LinearLayout.LayoutParams(-1, 0, 1f))
+        box.addView(TextView(this).apply { text = "\u00A9 2026 Mantra Productions"; textSize = 13f; typeface = fBody; setTextColor(DIM); gravity = Gravity.CENTER; setPadding(0, dp(8), 0, dp(4)) }, LinearLayout.LayoutParams(-1, -2))
+        root.addView(box)
+    }
+
+    private var inSettings = false
+    private fun build() { if (inSettings) settings() else if (cur == null) home() else openPlayer(cur!!, keepScroll = true) }
 
     // ------------------------------------------------------------------ home: the Lab's exercises as collections
     private fun home() {
-        stopPlay(); cur = null; root.removeAllViews(); sv = null
+        inSettings = false; stopPlay(); cur = null; root.removeAllViews(); sv = null
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         box.addView(topBar())
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(16), 0, dp(24)) }
@@ -199,6 +218,7 @@ class MainActivity : Activity() {
     // ------------------------------------------------------------------ the exercise page, laid out like the site's
     private fun openPlayer(e: Exercise, keepScroll: Boolean = false) {
         val was = sv?.scrollY ?: 0
+        inSettings = false
         val wasPlaying = player != null
         if (!keepScroll) { stopPlay(); curRow = 0; curLine = 0; lastRow = -1; lastLine = -1 } else { ticker?.let { root.removeCallbacks(it) }; ticker = null }
         if (keepScroll) { lr = -1; lj = -1; lastRow = -1; lastLine = -1 }
@@ -346,6 +366,6 @@ class MainActivity : Activity() {
     private fun stopPlay() { player?.stop(); player = null; ticker?.let { root.removeCallbacks(it) }; ticker = null; anim?.cancel(); anim = null; playV?.on = false; lr = -1; lj = -1 }
 
     @Deprecated("back")
-    override fun onBackPressed() { if (cur != null) home() else super.onBackPressed() }
+    override fun onBackPressed() { if (inSettings) { if (cur != null) openPlayer(cur!!) else home() } else if (cur != null) home() else super.onBackPressed() }
     override fun onPause() { super.onPause(); if (player != null) { stopPlay(); lightsOff() } }
 }
