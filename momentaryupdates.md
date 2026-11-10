@@ -26,3 +26,6 @@
 
 **Request 9.** Marko (10.11.2026): "And also for MPA Academy, these numbers in front of the rows are very important. By the way, at the top where there is a speed, you can put number of repetition for each part of the exercise. Now it's going two times each, I can change that. And because it's so important this number, 7 plus 1 or whatever it is, while the play button is on the first row, 7 plus 1 is on the second row. When the play button jumps to the second row, 7 plus 1 jumps on the first row. So they are kind of exchanging position. So I have big letters on the screen and I can see everything. And number of loops I don't need to see. Number of loops can be seen and at the real time changed at the top of the screen. Where is MPA Academy, Speeds, Loops and Portrait."
 **Status:** saved first (read as: top bar = MPA Academy, Speeds, Loops, Portrait; row labels big in the front slot, swapping with the play marker; no loop counter in the rows).
+
+**Request 10.** Marko (10.11.2026): "please also at the bottom of every of my app which is published on the website put copyright Mantra Productions at the bottom of settings"
+**Status:** saved first (read as: a minimal settings screen, opened by tapping the MPA ACADEMY title, with the quiet centred line "© 2026 Mantra Productions" at its bottom).
