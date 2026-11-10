@@ -370,7 +370,9 @@ class MainActivity : Activity() {
                         cellFor(lr)?.lit = -1
                         cellFor(r)?.lit = j; lr = r; lj = j
                     }
-                    val line = j / (cellFor(r)?.cols ?: 8)
+                    val cv0 = cellFor(r)
+                    if (cv0 != null && cv0.height > 0 && labs.firstOrNull()?.translationY == 0f) placeLabels()   // after a phrase change the label is placed once the new phrase is laid out
+                    val line = j / (cv0?.cols ?: 8)
                     lastRow = r
                     if (r != curRow || line != lastLine) { curRow = r; curLine = line; lastLine = line; placeLabels(); moveTo(r, line) }
                 }
