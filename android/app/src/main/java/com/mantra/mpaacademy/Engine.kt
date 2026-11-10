@@ -32,7 +32,7 @@ class Bank(ctx: Context, set: String) {
 }
 
 /** Streams the exercise to an AudioTrack; `cell` reports which cell is heard now (row, index, repeat). */
-class Player(private val ex: Exercise, private val bank: Bank, speed: Int, private val onEnd: () -> Unit) {
+class Player(private val ex: Exercise, private val bank: Bank, speed: Int, private val startRow: Int = 0, private val onEnd: () -> Unit) {
     private val rate = 48000
     private val stepFrames = (rate * 60.0 / ex.base / speed).toInt()
     private val track: AudioTrack
@@ -54,7 +54,7 @@ class Player(private val ex: Exercise, private val bank: Bank, speed: Int, priva
         thread = Thread {
             val tail = IntArray(rate)           // sample tails running over into the next cell
             val out = ShortArray(stepFrames)
-            var frame = 0L; var r = 0
+            var frame = 0L; var r = startRow.coerceIn(0, ex.rows.size - 1)   // request 12: continue in sequence from the phrase on screen
             while (!stopped) {
                 var rep = 1
                 while (ex.loops == 0 || rep <= ex.loops) {

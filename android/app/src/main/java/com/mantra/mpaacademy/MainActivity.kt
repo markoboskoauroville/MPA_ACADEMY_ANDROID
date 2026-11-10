@@ -45,6 +45,8 @@ class MainActivity : Activity() {
     private var anim: ValueAnimator? = null
     private var want = 0f                         // where the play button wants to be, in stage pixels (before clamping)
     private var curRow = 0; private var curLine = 0
+    private var showRow = 0                       // request 12: only this phrase (its two lines) is on screen; the rest is hidden
+    private fun cellFor(r: Int) = if (r == showRow) cells.getOrNull(0) else null
     private var ticker: Runnable? = null
     private var lr = -1; private var lj = -1; private var lastRow = -1; private var lastLine = -1
 
@@ -131,7 +133,15 @@ class MainActivity : Activity() {
             requestedOrientation = if (landscape) ActivityInfo.SCREEN_ORIENTATION_PORTRAIT else ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         }.apply { alpha = 1f; contentDescription = "Switch to " + (if (landscape) "portrait" else "landscape") }
     }
-    private fun titleView() = TextView(this).apply { text = "MPA ACADEMY"; textSize = 18f; typeface = fCond; setTextColor(INK); letterSpacing = 0.06f; minHeight = dp(48); gravity = Gravity.CENTER_VERTICAL; background = pressBg(d, 0x33F59E0B, 0, 6f); setOnClickListener { settings() } }
+    private fun titleView(e: Exercise? = null) = TextView(this).apply {
+        // request 12: the current phrase ("6+2") sits next to the title
+        val lab = e?.let { phrInfo(it.rows).getOrNull(showRow)?.lab }
+        val s = SpannableString(if (lab.isNullOrEmpty()) "MPA ACADEMY" else "MPA ACADEMY   $lab")
+        if (!lab.isNullOrEmpty()) {
+            s.setSpan(android.text.style.ForegroundColorSpan(AMBER), s.length - lab.length, s.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            s.setSpan(RelativeSizeSpan(1.35f), s.length - lab.length, s.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+        text = s; textSize = 18f; typeface = fCond; setTextColor(INK); letterSpacing = 0.06f; minHeight = dp(48); gravity = Gravity.CENTER_VERTICAL; background = pressBg(d, 0x33F59E0B, 0, 6f); setOnClickListener { settings() } }
     private fun speedsView(e: Exercise): View {   // the site's speed control: 16/1 | 16/2 | 16/4 | 16/8 | 16/16 | 16/32, default 16/4
         val f = Flow(this, 0, 0)
         for ((k, v) in listOf(1, 2, 4, 8, 16, 32).withIndex()) {
@@ -157,7 +167,7 @@ class MainActivity : Activity() {
         val landscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val row = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(0, dp(6), 0, dp(6)) }
-        row.addView(titleView(), LinearLayout.LayoutParams(0, -2, 1f))
+        row.addView(titleView(e), LinearLayout.LayoutParams(0, -2, 1f))
         if (e != null && landscape) {
             row.addView(speedsView(e), LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dp(16) })
             row.addView(loopsView(e), LinearLayout.LayoutParams(-2, -2).apply { marginEnd = dp(16) })
@@ -221,7 +231,8 @@ class MainActivity : Activity() {
         val was = sv?.scrollY ?: 0
         inSettings = false
         val wasPlaying = player != null
-        if (!keepScroll) { stopPlay(); curRow = 0; curLine = 0; lastRow = -1; lastLine = -1 } else { ticker?.let { root.removeCallbacks(it) }; ticker = null }
+        if (e !== cur) showRow = 0                    // a new exercise starts at its first phrase
+        if (!keepScroll) { stopPlay(); curRow = showRow; curLine = 0; lastRow = -1; lastLine = -1 } else { ticker?.let { root.removeCallbacks(it) }; ticker = null }
         if (keepScroll) { lr = -1; lj = -1; lastRow = -1; lastLine = -1 }
         cur = e; root.removeAllViews()
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
@@ -258,6 +269,7 @@ class MainActivity : Activity() {
             val rowsBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(gutter, dp(14), 0, 0) }
             val info = phrInfo(e.rows)
             for ((ri, row) in e.rows.withIndex()) {
+                if (ri != showRow) continue                                // request 12: one phrase on screen, the rest hidden
                 if (info[ri].head) rowsBox.addView(TextView(this).apply { text = "Reverse dynamics:"; textSize = 18f; typeface = fBody; setTextColor(INK); letterSpacing = 0.04f; setPadding(0, dp(22), 0, dp(6)) })
                 val cv = CellsView(this, row, spoons(row), if (wide) 16 else 8, fBody, fMono)
                 cells.add(cv)
@@ -290,7 +302,7 @@ class MainActivity : Activity() {
     // "the reading line is the vertical MIDDLE of the visible viewport; the play button is always clamped inside the visible area;
     //  prompter on scrolls the current row's centre to the middle line (smooth, 380 ms); off only scrolls when the row is out of view."
     private fun yIn(parent: View, v: View): Float { var y = 0f; var x: View? = v; while (x != null && x !== parent) { y += x.top; x = x.parent as? View }; return y }
-    private fun rowCenter(r: Int, line: Int = 0): Float { val s = stage ?: return 0f; val c = cells.getOrNull(r) ?: return 0f; return yIn(s, c) + c.lineCenter(line) }   // stage px: the centre of the LINE being played
+    private fun rowCenter(r: Int, line: Int = 0): Float { val s = stage ?: return 0f; val c = cellFor(r) ?: return 0f; return yIn(s, c) + c.lineCenter(line) }   // stage px: the centre of the LINE being played
     private fun btnWantFor(r: Int, line: Int = 0) = rowCenter(r, line) - dpf(22f)
     private fun clampBtn(raw: Float): Float {      // inside the viewport and inside its own pattern (site: clampTop)
         val s = sv ?: return raw; val st = stage ?: return raw
@@ -301,8 +313,9 @@ class MainActivity : Activity() {
     /** The row numbers are big in the front slot; the play marker takes the slot of the line being played and the number moves to the other line of that row (they swap). */
     private fun placeLabels() {
         val s = stage ?: return
-        for ((r, cv) in cells.withIndex()) {
-            val lab = labs.getOrNull(r) ?: continue
+        for ((i, cv) in cells.withIndex()) {
+            val r = showRow
+            val lab = labs.getOrNull(i) ?: continue
             val line = if (r == curRow && cv.cols < 16 && cv.lineCount() > 1 && curLine == 0) 1 else 0
             lab.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
             lab.translationX = labX.toFloat()
@@ -337,9 +350,9 @@ class MainActivity : Activity() {
     private fun togglePlay(e: Exercise) { if (player != null) { stopPlay(); lightsOff() } else startPlay(e) }
 
     private fun startPlay(e: Exercise) {
-        val p = Player(e, Bank(this, if (voice) "voice" else "drum"), speed) {}
-        player = p; playV?.on = true; curRow = 0; curLine = 0; lastRow = -1; lastLine = -1; lr = -1; lj = -1
-        placeLabels(); setBtn(btnWantFor(0)); if (tele) { midScroll(0, false); applyBtn() }     // site: placePlay(el,0); midScroll(el,0,false)
+        val p = Player(e, Bank(this, if (voice) "voice" else "drum"), speed, showRow) {}   // request 12: continue in sequence from the phrase on screen
+        player = p; playV?.on = true; curRow = showRow; curLine = 0; lastRow = -1; lastLine = -1; lr = -1; lj = -1
+        placeLabels(); setBtn(btnWantFor(showRow)); if (tele) { midScroll(showRow, false); applyBtn() }     // site: placePlay(el,0); midScroll(el,0,false)
         p.start(); startTicker()
     }
 
@@ -349,11 +362,15 @@ class MainActivity : Activity() {
             override fun run() {
                 if (player !== p) return
                 p.heard()?.let { (r, j, _) ->
-                    if (r != lr || j != lj) {
-                        if (lr in cells.indices) cells[lr].lit = -1
-                        cells.getOrNull(r)?.lit = j; lr = r; lj = j
+                    if (r != showRow) {                     // request 12: the next phrase replaces the one on screen, in sequence
+                        showRow = r; curRow = r; curLine = 0; lastLine = -1; lr = -1; lj = -1
+                        openPlayer(e, keepScroll = true); return
                     }
-                    val line = j / (cells.getOrNull(r)?.cols ?: 8)
+                    if (r != lr || j != lj) {
+                        cellFor(lr)?.lit = -1
+                        cellFor(r)?.lit = j; lr = r; lj = j
+                    }
+                    val line = j / (cellFor(r)?.cols ?: 8)
                     lastRow = r
                     if (r != curRow || line != lastLine) { curRow = r; curLine = line; lastLine = line; placeLabels(); moveTo(r, line) }
                 }
