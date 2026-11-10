@@ -47,3 +47,6 @@ Marko, verbatim: "also, I don't need to see anywhere in the interface PH01 the c
 
 ## Request 16 (10.11.2026)
 Marko, verbatim: "Upper row, upper frame should be only one line. Please remove the title of exercise and move everything to one line."
+
+## Request 16 follow-up (10.11.2026)
+Portrait: the one-line upper frame is compact (V | D, no LOOPS caption, no bars, rotate icon) so everything fits.

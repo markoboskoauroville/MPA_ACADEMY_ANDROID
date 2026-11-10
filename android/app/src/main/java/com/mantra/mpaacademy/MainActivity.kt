@@ -154,21 +154,21 @@ class MainActivity : Activity() {
     private fun loopsView(e: Exercise): View {    // repetitions of every part, changeable live (0 = forever)
         val f = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
         val n = TextView(this).apply { textSize = 18f; typeface = fCond; setTextColor(AMBER2); gravity = Gravity.CENTER }
-        val lab = TextView(this).apply { text = "LOOPS"; textSize = 10f; typeface = fCondS; setTextColor(DIM); letterSpacing = 0.08f; gravity = Gravity.CENTER }
-        val mid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; minimumWidth = dp(46); addView(lab); addView(n) }
+        val lab = TextView(this).apply { text = if (compact) "" else "LOOPS"; textSize = if (compact) 1f else 10f; typeface = fCondS; setTextColor(DIM); letterSpacing = 0.08f; gravity = Gravity.CENTER }
+        val mid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; minimumWidth = dp(if (compact) 22 else 46); if (!compact) addView(lab); addView(n) }
         fun show() { n.text = if (e.loops == 0) "\u221E" else "${e.loops}" }
         fun set(v: Int) { e.loops = v.coerceIn(0, 99); getPreferences(MODE_PRIVATE).edit().putInt("loops", e.loops).apply(); show() }
         show()
-        f.addView(pipe("\u2212", false) { set(if (e.loops == 0) 99 else e.loops - 1) }.apply { textSize = 22f; minimumWidth = dp(40) })
+        f.addView(pipe("\u2212", false) { set(if (e.loops == 0) 99 else e.loops - 1) }.apply { textSize = 22f; minimumWidth = dp(if (compact) 28 else 40); setPadding(0, dp(4), 0, dp(4)) })
         f.addView(mid)
-        f.addView(pipe("+", false) { set(if (e.loops >= 99) 0 else e.loops + 1) }.apply { textSize = 22f; minimumWidth = dp(40) })
+        f.addView(pipe("+", false) { set(if (e.loops >= 99) 0 else e.loops + 1) }.apply { textSize = 22f; minimumWidth = dp(if (compact) 28 else 40); setPadding(0, dp(4), 0, dp(4)) })
         return f
     }
     private fun soundView(e: Exercise): View {     // request 14: VOICE | DRUM lives in the top frame
         val f = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-        f.addView(pipe("VOICE", voice) { voice = true; openPlayer(e, true); restartIfPlaying() })
-        f.addView(bar())
-        f.addView(pipe("DRUM", !voice) { voice = false; openPlayer(e, true); restartIfPlaying() })
+        f.addView(pipe(if (compact) "V" else "VOICE", voice) { voice = true; openPlayer(e, true); restartIfPlaying() }.apply { if (compact) { minimumWidth = dp(26); setPadding(dp(2), dp(4), dp(2), dp(4)) } })
+        if (!compact) f.addView(bar())
+        f.addView(pipe(if (compact) "D" else "DRUM", !voice) { voice = false; openPlayer(e, true); restartIfPlaying() }.apply { if (compact) { minimumWidth = dp(26); setPadding(dp(2), dp(4), dp(2), dp(4)) } })
         return f
     }
     private fun topBar(e: Exercise? = null): View {
@@ -179,8 +179,10 @@ class MainActivity : Activity() {
             row.addView(titleView(), LinearLayout.LayoutParams(0, -2, 1f))
             row.addView(orientPill())
         } else {
+            val portrait = resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE   // portrait: compact controls so the line stays ONE line
+            compact = portrait
             val lab = phrInfo(e.rows).getOrNull(showRow)?.lab ?: ""
-            row.addView(TextView(this).apply { text = lab; textSize = 24f; typeface = fCond; setTextColor(AMBER); gravity = Gravity.CENTER_VERTICAL; minHeight = dp(48); includeFontPadding = false })
+            row.addView(TextView(this).apply { text = lab; textSize = if (portrait) 20f else 24f; typeface = fCond; setTextColor(AMBER); gravity = Gravity.CENTER_VERTICAL; minHeight = dp(48); includeFontPadding = false })
             row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
             row.addView(speedsView(e).also { shrink(it) })
             row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
@@ -188,13 +190,14 @@ class MainActivity : Activity() {
             row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
             row.addView(soundView(e))
             row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
-            row.addView(orientPill().apply { (this as TextView).minHeight = dp(40); setPadding(dp(10), dp(2), dp(10), dp(2)) })
+            row.addView(orientPill().apply { (this as TextView).minHeight = dp(40); if (compact) { text = "\u21BB"; textSize = 18f; minimumWidth = dp(40); setPadding(dp(4), dp(2), dp(4), dp(2)) } else setPadding(dp(10), dp(2), dp(10), dp(2)) })
         }
         col.addView(row)
         col.addView(View(this).apply { setBackgroundColor(LINE); layoutParams = LinearLayout.LayoutParams(-1, 1) })
         return col
     }
-    private fun shrink(v: View) { if (v is ViewGroup) for (i in 0 until v.childCount) { val c = v.getChildAt(i); if (c is TextView) { c.minimumWidth = dp(26); c.setPadding(dp(1), 0, dp(1), 0) } } }
+    private var compact = false
+    private fun shrink(v: View) { if (v is ViewGroup) for (i in 0 until v.childCount) { val c = v.getChildAt(i); if (c is TextView) { c.minimumWidth = dp(if (compact) 22 else 26); c.setPadding(dp(1), 0, dp(1), 0); if (compact) { if (c.text.toString() == "|") c.visibility = View.GONE else c.textSize = 12f } } } }
 
     // ------------------------------------------------------------------ settings (tap the title): one switch and, at the bottom, the copyright line
     private fun settings() {
