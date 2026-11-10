@@ -22,3 +22,9 @@ v4 to v12 (10.11.2026, requests 4 to 11 in momentaryupdates.md): icon = the webs
 - v16: every control in the top frame: exercise name as title + phrase label, speeds, loops, VOICE | DRUM; the lower frame shows only the exercise and the play button. VOICE by default, prompter always on (no switch), notes and base speed removed from view.
 - v17: no exercise code (PH01) anywhere.
 - Checked on the Pixel 7 (v17, landscape): home without code; player top frame and lower frame as above. Phrase advance checked on the emulator at 16/32, loops 1 (muted). Not checked: sound by ear; in landscape the second line sits at the bottom edge and needs the prompter scroll while playing.
+
+## v18 to v20 (10.11.2026, confirmed by Marko: "User interface is now correct")
+- v18: upper frame one line, no exercise title (phrase label, speeds, loops, voice|drum, orientation).
+- v19: portrait compact (V | D, no LOOPS caption, rotate icon).
+- v20: speed as one stacked fraction (16 over a straight line over 4) with arrows left and right.
+- Checked on the Pixel 7 by screenshot (landscape v20; portrait v19).
