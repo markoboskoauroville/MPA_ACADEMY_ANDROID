@@ -111,14 +111,14 @@ class PlayView(ctx: Context) : View(ctx) {
 /** Wraps its children onto lines (the site's flex-wrap). */
 class Flow(ctx: Context, private val gapX: Int, private val gapY: Int) : ViewGroup(ctx) {
     override fun onMeasure(w: Int, h: Int) {
-        val W = MeasureSpec.getSize(w); var x = 0; var y = 0; var lh = 0
+        val W = MeasureSpec.getSize(w); var x = 0; var y = 0; var lh = 0; var maxX = 0
         for (i in 0 until childCount) {
             val v = getChildAt(i); if (v.visibility == GONE) continue
             v.measure(MeasureSpec.makeMeasureSpec(W, MeasureSpec.AT_MOST), MeasureSpec.UNSPECIFIED)
             if (x > 0 && x + v.measuredWidth > W) { x = 0; y += lh + gapY; lh = 0 }
-            x += v.measuredWidth + gapX; lh = maxOf(lh, v.measuredHeight)
+            x += v.measuredWidth + gapX; lh = maxOf(lh, v.measuredHeight); maxX = maxOf(maxX, x - gapX)
         }
-        setMeasuredDimension(W, y + lh)
+        setMeasuredDimension(if (MeasureSpec.getMode(w) == MeasureSpec.EXACTLY) W else maxX, y + lh)
     }
     override fun onLayout(ch: Boolean, l: Int, t: Int, r: Int, b: Int) {
         val W = r - l
