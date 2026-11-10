@@ -252,7 +252,7 @@ class MainActivity : Activity() {
             stopPlay()
         } else {
             val screenW = (resources.configuration.screenWidthDp * d).toInt() - padL - padR
-            val wide = (screenW - dp(140)) / 16 >= dp(36)                 // landscape: one line per row, button and label side by side
+            val wide = false                                               // request 11: every phrase is two lines, one bar per line, in both orientations
             val gutter = if (wide) dp(140) else dp(80)
             labX = if (wide) dp(52) else 0
             val rowsBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(gutter, dp(14), 0, 0) }

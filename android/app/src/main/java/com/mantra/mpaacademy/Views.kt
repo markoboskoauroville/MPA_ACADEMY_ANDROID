@@ -65,7 +65,7 @@ class CellsView(ctx: Context, private val row: List<String>, private val sp: Int
     private val lines get() = (row.size + cols - 1) / cols
     override fun onMeasure(w: Int, h: Int) {
         val W = MeasureSpec.getSize(w).toFloat()
-        cw = (W + (cols - 1) * d) / cols; ch = cw * 56f / 52f
+        cw = minOf((W + (cols - 1) * d) / cols, 76 * d); ch = cw * 56f / 52f
         setMeasuredDimension(W.toInt(), (lines * pitch() - 6 * d).toInt())
     }
     override fun onDraw(c: Canvas) {
