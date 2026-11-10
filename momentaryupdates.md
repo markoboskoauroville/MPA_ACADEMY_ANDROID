@@ -8,3 +8,9 @@
 
 **Request 3.** Marko (10.11.2026): "please any you are testing on Pixel 7 leave its icon on the desktop"
 **Status:** saved; the app stays installed on the Pixel 7, icon on the home screen, never uninstalled.
+
+**Request 4.** Marko (10.11.2026): "Our app which we called MPA app first needs to have icon the same as the website. Second of all layout must be copied from website. I have something I'm calling teleprompter. And this teleprompter functionality must be in the app as same. Please make it. And app should work in both directions. Landscape and portrait. Put the button landscape portrait switch upper right corner."
+**Status:** saved first (read as: v4 = exact website icon, website layout, teleprompter as default, landscape + portrait with a switch top right).
+
+**Request 5.** Marko (10.11.2026): "so teleprompter is default behavior, read about what that means in manifests, skills, takeovers, etc"
+**Status:** saved first.
