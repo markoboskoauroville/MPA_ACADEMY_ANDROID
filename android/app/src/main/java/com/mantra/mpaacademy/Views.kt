@@ -60,16 +60,17 @@ class CellsView(ctx: Context, private val row: List<String>, private val sp: Int
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val txt = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER; typeface = fLetter }
     private val num = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER; typeface = fMono; color = DIM; textSize = 10 * d }
+    private fun pitch() = ch + 2 * numH + 6 * d
     private val lines get() = (row.size + cols - 1) / cols
     override fun onMeasure(w: Int, h: Int) {
         val W = MeasureSpec.getSize(w).toFloat()
         cw = (W + (cols - 1) * d) / cols; ch = cw * 56f / 52f
-        setMeasuredDimension(W.toInt(), (lines * (ch + 2 * numH) - (lines - 1) * 0).toInt())
+        setMeasuredDimension(W.toInt(), (lines * pitch() - 6 * d).toInt())
     }
     override fun onDraw(c: Canvas) {
         for (j in row.indices) {
             val col = j % cols; val ln = j / cols
-            val x = col * (cw - d); val top = ln * (ch + 2 * numH) + numH
+            val x = col * (cw - d); val top = ln * pitch() + numH
             val on = j == lit
             fill.color = if (on) AMBER else Color.TRANSPARENT
             c.drawRect(x, top, x + cw, top + ch, fill)
@@ -119,12 +120,19 @@ class Flow(ctx: Context, private val gapX: Int, private val gapY: Int) : ViewGro
         setMeasuredDimension(W, y + lh)
     }
     override fun onLayout(ch: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        val W = r - l; var x = 0; var y = 0; var lh = 0
+        val W = r - l
+        // line heights first, so every child can be centred on its line
+        val hs = ArrayList<Int>(); run { var x0 = 0; var h0 = 0
+            for (i in 0 until childCount) { val v = getChildAt(i); if (v.visibility == GONE) continue
+                if (x0 > 0 && x0 + v.measuredWidth > W) { hs.add(h0); x0 = 0; h0 = 0 }
+                x0 += v.measuredWidth + gapX; h0 = maxOf(h0, v.measuredHeight) }
+            hs.add(h0) }
+        var x = 0; var y = 0; var line = 0; var lh = hs[0]
         for (i in 0 until childCount) {
             val v = getChildAt(i); if (v.visibility == GONE) continue
-            if (x > 0 && x + v.measuredWidth > W) { x = 0; y += lh + gapY; lh = 0 }
-            v.layout(x, y, x + v.measuredWidth, y + v.measuredHeight)
-            x += v.measuredWidth + gapX; lh = maxOf(lh, v.measuredHeight)
+            if (x > 0 && x + v.measuredWidth > W) { x = 0; y += lh + gapY; line++; lh = hs[line] }
+            v.layout(x, y + (lh - v.measuredHeight) / 2, x + v.measuredWidth, y + (lh - v.measuredHeight) / 2 + v.measuredHeight)
+            x += v.measuredWidth + gapX
         }
     }
 }
