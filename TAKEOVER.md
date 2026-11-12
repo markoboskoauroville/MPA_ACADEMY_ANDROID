@@ -44,3 +44,4 @@ v4 to v12 (10.11.2026, requests 4 to 11 in momentaryupdates.md): icon = the webs
 - "(reverse dynamics)" sits right of the skip-next button, in parentheses (two lines in portrait), not under the title.
 - With one exercise in the app, it opens straight into it at start; Back goes to the home list (settings and copyright stay reachable), Back again exits.
 - Speed: a drop-down (PopupWindow) of stacked fractions 16/1, 16/2, 16/4, 16/8, 16/16, 16/32; the arrows are gone. Remembered as before (speed, loops, orientation, phrase per exercise).
+- v23: fix - the auto-open at start skipped the remembered phrase (openPlayer only reads row_<code> when the exercise changes, and auto-open set `cur` first); now read at auto-open too. v22 checked on the A142: auto-open, rectangle, bold 1s, drop-down.

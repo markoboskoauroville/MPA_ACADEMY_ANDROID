@@ -80,7 +80,7 @@ class MainActivity : Activity() {
             padL = i.left + dp(16); padR = i.right + dp(16)
             v.setPadding(padL, i.top + dp(8), padR, i.bottom + dp(16))
             val W = (resources.configuration.screenWidthDp * d).toInt()
-            if (W != lastW) { lastW = W; if (firstBuild && cur == null && cats.sumOf { it.second.size } == 1) cur = cats[0].second[0]; firstBuild = false; build() }
+            if (W != lastW) { lastW = W; if (firstBuild && cur == null && cats.sumOf { it.second.size } == 1) { cur = cats[0].second[0]; showRow = prefs.getInt("row_" + cur!!.code, 0).coerceIn(0, cur!!.rows.size - 1) }; firstBuild = false; build() }
             w
         }
         if (intent.getBooleanExtra("pin", false)) pinIcon()
