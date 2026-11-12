@@ -37,3 +37,10 @@ v4 to v12 (10.11.2026, requests 4 to 11 in momentaryupdates.md): icon = the webs
 - Remembered between sessions (getPreferences): speed, loops, orientation, current phrase per exercise.
 - Version "vN" in the upper right of the top bar (and so of settings); tap opens https://github.com/markoboskoauroville/MPA_ACADEMY_ANDROID/releases/latest. NOT done: version drawn under the launcher icon (manifest version-visible.md section 2) - next.
 - Checked on the A142 (portrait, installed from release v21): top bar fits one line, numbers below lit with the playing cell, reverse caption under the title, skip buttons advance. Not checked: landscape, sound by ear, restart of the app (remembered settings).
+
+## v22 (12.11.2026, request 19)
+- Orientation switch = OrientView: a plain amber rectangle shaped like the screen now (tall in portrait, wide in landscape), tap turns it. No arrow, no LANDSCAPE/PORTRAIT text, also on home.
+- Lower numbers: every 1 is bold, the rest normal; the playing one turns amber.
+- "(reverse dynamics)" sits right of the skip-next button, in parentheses (two lines in portrait), not under the title.
+- With one exercise in the app, it opens straight into it at start; Back goes to the home list (settings and copyright stay reachable), Back again exits.
+- Speed: a drop-down (PopupWindow) of stacked fractions 16/1, 16/2, 16/4, 16/8, 16/16, 16/32; the arrows are gone. Remembered as before (speed, loops, orientation, phrase per exercise).

@@ -80,7 +80,7 @@ class MainActivity : Activity() {
             padL = i.left + dp(16); padR = i.right + dp(16)
             v.setPadding(padL, i.top + dp(8), padR, i.bottom + dp(16))
             val W = (resources.configuration.screenWidthDp * d).toInt()
-            if (W != lastW) { lastW = W; build() }
+            if (W != lastW) { lastW = W; if (firstBuild && cur == null && cats.sumOf { it.second.size } == 1) cur = cats[0].second[0]; firstBuild = false; build() }
             w
         }
         if (intent.getBooleanExtra("pin", false)) pinIcon()
@@ -131,12 +131,15 @@ class MainActivity : Activity() {
     }
 
     // ------------------------------------------------------------------ the top bar: MPA ACADEMY · speeds · loops · portrait/landscape (Marko 10.11.2026)
-    private fun orientPill(): View {
+    private fun orientPill(): View {   // request 19: a plain rectangle in the screen's orientation; a tap turns the screen
         val landscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        return pill(if (landscape) "Portrait" else "Landscape", true) {
-            requestedOrientation = if (landscape) ActivityInfo.SCREEN_ORIENTATION_PORTRAIT else ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            prefs.edit().putInt("orient", if (landscape) 2 else 1).apply()
-        }.apply { alpha = 1f; contentDescription = "Switch to " + (if (landscape) "portrait" else "landscape") }
+        return OrientView(this, landscape).apply {
+            contentDescription = "Switch to " + (if (landscape) "portrait" else "landscape")
+            setOnClickListener {
+                requestedOrientation = if (landscape) ActivityInfo.SCREEN_ORIENTATION_PORTRAIT else ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                prefs.edit().putInt("orient", if (landscape) 2 else 1).apply()
+            }
+        }
     }
     private fun titleView(e: Exercise? = null) = TextView(this).apply {
         // request 12: the current phrase ("6+2") sits next to the title
@@ -148,19 +151,29 @@ class MainActivity : Activity() {
             s.setSpan(RelativeSizeSpan(1.35f), s.length - lab.length, s.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
         text = s; textSize = 18f; typeface = fCond; setTextColor(INK); letterSpacing = 0.06f; minHeight = dp(48); gravity = Gravity.CENTER_VERTICAL; background = pressBg(d, 0x33F59E0B, 0, 6f); setOnClickListener { settings() } }
-    private fun speedsView(e: Exercise): View {   // request 17: ◀ one speed ▶, the speed as a real stacked fraction (16 over a straight line over 4)
+    private fun fracView(n: Int, big: Boolean = true) = LinearLayout(this).apply {   // 16 over a straight line over n
+        orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL
+        fun num(v: Int) = TextView(this@MainActivity).apply { text = "$v"; textSize = if (big) 15f else 17f; typeface = fCond; setTextColor(AMBER2); gravity = Gravity.CENTER; includeFontPadding = false }
+        addView(num(16))
+        addView(View(this@MainActivity).apply { setBackgroundColor(AMBER2) }, LinearLayout.LayoutParams(dp(22), dp(2)).apply { topMargin = dp(2); bottomMargin = dp(2) })
+        addView(num(n))
+    }
+    private fun speedsView(e: Exercise): View {   // request 19: the speed is a drop-down menu, 16/1 16/2 16/4 16/8 16/16 16/32
         val all = listOf(1, 2, 4, 8, 16, 32)
-        val f = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-        fun step(k: Int) { val i = (all.indexOf(speed).coerceAtLeast(0) + k).coerceIn(0, all.size - 1); if (all[i] != speed) { speed = all[i]; prefs.edit().putInt("speed", speed).apply(); openPlayer(e, true); restartIfPlaying() } }
-        val i = all.indexOf(speed)
-        f.addView(pipe("\u25C0", i > 0) { step(-1) }.apply { textSize = 16f; minimumWidth = dp(if (compact) 28 else 36); setPadding(dp(1), dp(4), dp(1), dp(4)) })
-        val frac = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; setPadding(dp(4), 0, dp(4), 0) }
-        fun num(n: Int) = TextView(this).apply { text = "$n"; textSize = 15f; typeface = fCond; setTextColor(AMBER2); gravity = Gravity.CENTER; includeFontPadding = false }
-        frac.addView(num(16))
-        frac.addView(View(this).apply { setBackgroundColor(AMBER2) }, LinearLayout.LayoutParams(dp(22), dp(2)).apply { topMargin = dp(2); bottomMargin = dp(2) })
-        frac.addView(num(speed))
-        f.addView(frac, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(2); marginEnd = dp(2) })
-        f.addView(pipe("\u25B6", i < all.size - 1) { step(1) }.apply { textSize = 16f; minimumWidth = dp(if (compact) 28 else 36); setPadding(dp(1), dp(4), dp(1), dp(4)) })
+        val f = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(dp(6), 0, dp(4), 0); minimumHeight = dp(48); background = pressBg(d, 0x33F59E0B, 0, 6f); contentDescription = "Speed" }
+        f.addView(fracView(speed))
+        f.addView(TextView(this).apply { text = "\u25BE"; textSize = 14f; setTextColor(AMBER2); setPadding(dp(4), 0, 0, 0) })
+        f.setOnClickListener { anchor ->
+            val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(4), dp(4), dp(4), dp(4)); background = pressBg(d, BG2, LINE, 8f, true) }
+            val pw = android.widget.PopupWindow(list, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
+            for (n in all) list.addView(LinearLayout(this).apply {
+                gravity = Gravity.CENTER; setPadding(dp(18), dp(6), dp(18), dp(6)); minimumHeight = dp(52)
+                background = pressBg(d, 0x33F59E0B, 0, 6f, n == speed, Color.TRANSPARENT)
+                addView(fracView(n, false))
+                setOnClickListener { pw.dismiss(); if (n != speed) { speed = n; prefs.edit().putInt("speed", speed).apply(); openPlayer(e, true); restartIfPlaying() } }
+            })
+            pw.elevation = dpf(8f); pw.showAsDropDown(anchor, 0, dp(2))
+        }
         return f
     }
     private fun loopsView(e: Exercise): View {    // repetitions of every part, changeable live (0 = forever)
@@ -185,9 +198,10 @@ class MainActivity : Activity() {
         val mid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; minimumWidth = dp(if (compact) 26 else 44) }
         mid.addView(TextView(this).apply { text = cur?.lab ?: ""; textSize = if (compact) 20f else 24f; typeface = fCond; setTextColor(AMBER); gravity = Gravity.CENTER; includeFontPadding = false })
         // reverse dynamics is written here, at the top, never down among the cells
-        if (cur?.rev == true) mid.addView(TextView(this).apply { text = if (compact) "REVERSE\nDYNAMICS" else "REVERSE DYNAMICS"; textSize = if (compact) 6.5f else 10f; typeface = fCondS; setTextColor(DIM); gravity = Gravity.CENTER; includeFontPadding = false; letterSpacing = 0.04f })
         f.addView(mid)
         f.addView(SkipView(this, true, showRow < e.rows.size - 1).apply { setOnClickListener { skip(1) }; contentDescription = "Next exercise" }, LinearLayout.LayoutParams(w, dp(44)))
+        // request 19: reverse dynamics beside the switcher, in parentheses
+        if (cur?.rev == true) f.addView(TextView(this).apply { text = if (compact) "(reverse\ndynamics)" else "(reverse dynamics)"; textSize = if (compact) 11f else 14f; typeface = fCondS; setTextColor(AMBER); gravity = Gravity.CENTER_VERTICAL; includeFontPadding = false; setLineSpacing(0f, 0.9f); setPadding(dp(2), 0, 0, 0) })
         return f
     }
     private fun setRow(e: Exercise, r: Int) { showRow = r; prefs.edit().putInt("row_" + e.code, r).apply() }
@@ -202,7 +216,7 @@ class MainActivity : Activity() {
         val row = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(0, dp(4), 0, dp(4)) }
         if (e == null) {
             row.addView(titleView(), LinearLayout.LayoutParams(0, -2, 1f))
-            row.addView(orientPill())
+            row.addView(orientPill(), LinearLayout.LayoutParams(dp(44), dp(44)))
         } else {
             val portrait = resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE   // portrait: compact controls so the line stays ONE line
             compact = portrait
@@ -212,7 +226,7 @@ class MainActivity : Activity() {
             row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
             row.addView(loopsView(e))
             row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
-            row.addView(orientPill().apply { (this as TextView).minHeight = dp(40); if (compact) { text = "\u21BB"; textSize = 18f; minimumWidth = dp(34); setPadding(dp(2), dp(2), dp(2), dp(2)) } else setPadding(dp(10), dp(2), dp(10), dp(2)) })
+            row.addView(orientPill(), LinearLayout.LayoutParams(dp(if (compact) 36 else 44), dp(44)))
         }
         row.addView(versionView())
         col.addView(row)
@@ -237,6 +251,7 @@ class MainActivity : Activity() {
     }
 
     private var inSettings = false
+    private var firstBuild = true   // request 19: with one exercise in the app, it opens straight away
     private fun build() { if (inSettings) settings() else if (cur == null) home() else openPlayer(cur!!, keepScroll = true) }
 
     // ------------------------------------------------------------------ home: the Lab's exercises as collections

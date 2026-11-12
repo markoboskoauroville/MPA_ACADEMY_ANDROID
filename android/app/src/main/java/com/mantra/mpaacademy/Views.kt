@@ -67,6 +67,7 @@ class CellsView(ctx: Context, private val row: List<String>, private val sp: Int
         set(v) { if (v != field) { field = v; invalidate() } }
     private val d = resources.displayMetrics.density
     private val numH = 0f
+    private val monoBold = Typeface.create(fMono, Typeface.BOLD)
     private val numB = 28 * d    // the numbers live below the cells, double size (20 instead of 10)
     private var cw = 0f; private var ch = 0f
     private val box = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = d; color = INK }
@@ -94,7 +95,7 @@ class CellsView(ctx: Context, private val row: List<String>, private val sp: Int
             txt.color = if (on) BG else INK; txt.textSize = ch * 0.54f
             val bl = top + ch / 2 - (txt.ascent() + txt.descent()) / 2
             c.drawText(row[j], x + cw / 2, bl, txt)
-            num.color = if (on) AMBER else DIM; num.typeface = if (on) Typeface.create(fMono, Typeface.BOLD) else fMono   // the number lights with its cell
+            num.color = if (on) AMBER else DIM; num.typeface = if (sp[j] == 1) monoBold else fMono   // request 19: every 1 bold, the rest normal; the number lights with its cell
             c.drawText("${sp[j]}", x + cw / 2, top + ch + 4 * d - num.ascent(), num)
         }
     }
@@ -173,5 +174,17 @@ class SkipView(ctx: Context, private val next: Boolean, private val enabled: Boo
         fun tri(x0: Float) = Path().apply { if (next) { moveTo(x0, cy - t); lineTo(x0 + tri, cy); lineTo(x0, cy + t) } else { moveTo(x0 + tri, cy - t); lineTo(x0, cy); lineTo(x0 + tri, cy + t) }; close() }
         if (next) { c.drawPath(tri(l), p); c.drawPath(tri(l + tri), p); c.drawRect(l + 2 * tri + 1.5f * d, cy - t, l + 2 * tri + 1.5f * d + bar, cy + t, p) }
         else { c.drawRect(l, cy - t, l + bar, cy + t, p); c.drawPath(tri(l + bar + 1.5f * d), p); c.drawPath(tri(l + bar + 1.5f * d + tri), p) }
+    }
+}
+
+/** The orientation switch: a plain rectangle shaped like the screen now (tall in portrait, wide in landscape). */
+class OrientView(ctx: Context, private val landscape: Boolean) : View(ctx) {
+    private val d = resources.displayMetrics.density
+    private val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 2 * d; color = AMBER }
+    init { isClickable = true; background = pressBg(d, 0x33F59E0B, 0, 6f) }
+    override fun onDraw(c: Canvas) {
+        val w = (if (landscape) 26 else 16) * d; val h = (if (landscape) 16 else 26) * d
+        val l = (width - w) / 2f; val t = (height - h) / 2f
+        c.drawRoundRect(l, t, l + w, t + h, 3 * d, 3 * d, p)
     }
 }
