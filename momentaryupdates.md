@@ -69,3 +69,7 @@ Marko, verbatim: "loop number should also have drop-down menu and screen orienta
 ## Request 21 (12.11.2026)
 Marko, verbatim: "please fix exercise feature when it comes to the end it should start from the beginning and don't write anymore reverse dynamics remove that only the numbers the title of the change so make a different color default color orange is normal dynamics reverse dynamics reverse dynamics should be some different color also warm you choose one maybe dark red"
 **Status:** v25: skip buttons wrap round (last > first, first > last); no "(reverse dynamics)" words; the phrase title (7+1) is dark red (#D7373F) in the reverse half, orange in the normal half.
+
+## Request 22 (12.11.2026)
+Marko, verbatim: "I don't like red letters. Only make underline. When there is reverse, underline the title of the text. Color stays the same."
+**Status:** v26: the phrase title is underlined in the reverse half, amber as always; the red is gone.

@@ -202,7 +202,7 @@ class MainActivity : Activity() {
         val w = dp(if (compact) 28 else 40)
         f.addView(SkipView(this, false, true).apply { setOnClickListener { skip(-1) }; contentDescription = "Previous exercise" }, LinearLayout.LayoutParams(w, dp(44)))
         val mid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; minimumWidth = dp(if (compact) 26 else 44) }
-        mid.addView(TextView(this).apply { text = cur?.lab ?: ""; textSize = if (compact) 20f else 24f; typeface = fCond; setTextColor(if (cur?.rev == true) REVERSE else AMBER);   // request 21: reverse dynamics = dark red title, no words
+        mid.addView(TextView(this).apply { text = cur?.lab ?: ""; textSize = if (compact) 20f else 24f; typeface = fCond; setTextColor(AMBER); if (cur?.rev == true) paintFlags = paintFlags or android.graphics.Paint.UNDERLINE_TEXT_FLAG   // request 22: reverse dynamics = the title is underlined, colour unchanged
         gravity = Gravity.CENTER; includeFontPadding = false })
         f.addView(mid)
         f.addView(SkipView(this, true, true).apply { setOnClickListener { skip(1) }; contentDescription = "Next exercise" }, LinearLayout.LayoutParams(w, dp(44)))

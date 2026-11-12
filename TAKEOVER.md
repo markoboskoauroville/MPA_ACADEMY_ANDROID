@@ -54,3 +54,6 @@ v4 to v12 (10.11.2026, requests 4 to 11 in momentaryupdates.md): icon = the webs
 - Skip next on the last phrase goes to the first (and previous on the first goes to the last); both buttons are always active. Playing already wrapped (Player: r = (r+1) % rows).
 - "(reverse dynamics)" removed. The title (7+1) is REVERSE = #D7373F (warm dark red) in the reverse half, amber in the normal half.
 - Checked on the A142 (v25 from the release): started at the last phrase 1+7 (red title) at 16/32, loops 1: playing went on to 7+1, 6+2 (wrap to the start works while playing); title colours as asked. Skip-wrap by button not pressed in the test.
+
+## v26 (12.11.2026, request 22)
+- Reverse dynamics = the phrase title is underlined (UNDERLINE_TEXT_FLAG), colour unchanged (amber). The red (v25) is removed.
