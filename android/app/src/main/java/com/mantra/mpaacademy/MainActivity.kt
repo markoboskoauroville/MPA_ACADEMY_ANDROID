@@ -67,8 +67,9 @@ class MainActivity : Activity() {
             val c = ca.getJSONObject(i); val ea = c.getJSONArray("exercises"); val l = ArrayList<Exercise>()
             for (k in 0 until ea.length()) {
                 val e = ea.getJSONObject(k); val ra = e.getJSONArray("rows")
-                l.add(Exercise(e.getString("code"), e.getString("name"), e.getInt("base"), e.getInt("loops"), e.getString("notes"),
-                    (0 until ra.length()).map { r -> val x = ra.getJSONArray(r); (0 until x.length()).map { x.getString(it) } }))
+                val rows = (0 until ra.length()).map { r -> val x = ra.getJSONArray(r); (0 until x.length()).map { x.getString(it) } }
+                l.add(Exercise(e.getString("code"), e.getString("name"), e.getInt("base"), e.getInt("loops"), e.getString("notes"), rows,
+                    e.optString("rhythm", e.getString("name")), e.optInt("beats", (rows.firstOrNull()?.size ?: 16) / 2)))
             }
             l.forEach { it.loops = prefs.getInt("loops", it.loops) }
             cats.add(c.getString("name") to l)
@@ -80,7 +81,8 @@ class MainActivity : Activity() {
             padL = i.left + dp(16); padR = i.right + dp(16)
             v.setPadding(padL, i.top + dp(8), padR, i.bottom + dp(16))
             val W = (resources.configuration.screenWidthDp * d).toInt()
-            if (W != lastW) { lastW = W; if (firstBuild && cur == null && cats.sumOf { it.second.size } == 1) { cur = cats[0].second[0]; showRow = prefs.getInt("row_" + cur!!.code, 0).coerceIn(0, cur!!.rows.size - 1) }; firstBuild = false; build() }
+            if (W != lastW) { lastW = W; if (firstBuild && cur == null) { val all = cats.flatMap { it.second }   // request 23: opens the rhythm chosen last (default PH01, Malfuf)
+                cur = all.firstOrNull { it.code == prefs.getString("ex", "PH01") } ?: all.firstOrNull { it.code == "PH01" } ?: all[0]; showRow = prefs.getInt("row_" + cur!!.code, 0).coerceIn(0, cur!!.rows.size - 1) }; firstBuild = false; build() }
             w
         }
         if (intent.getBooleanExtra("pin", false)) pinIcon()
@@ -208,6 +210,29 @@ class MainActivity : Activity() {
         f.addView(SkipView(this, true, true).apply { setOnClickListener { skip(1) }; contentDescription = "Next exercise" }, LinearLayout.LayoutParams(w, dp(44)))
         return f
     }
+    private fun rhythmView(e: Exercise): View {    // request 23: a drop-down of the traditional rhythms; bar 1 of every phrase is the chosen rhythm
+        val all = cats.flatMap { it.second }
+        val f = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(dp(4), 0, dp(4), 0); minimumHeight = dp(48); background = pressBg(d, 0x33F59E0B, 0, 6f); contentDescription = "Rhythm" }
+        f.addView(TextView(this).apply { text = e.rhythm.uppercase(); textSize = if (compact) 14f else 18f; typeface = fCond; setTextColor(INK); letterSpacing = 0.04f
+            isSingleLine = true; ellipsize = android.text.TextUtils.TruncateAt.END; maxWidth = dp(if (compact) 78 else 150); includeFontPadding = false })
+        f.addView(TextView(this).apply { text = "\u25BE"; textSize = 14f; setTextColor(AMBER2); setPadding(dp(4), 0, 0, 0) })
+        f.setOnClickListener { anchor ->
+            val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(4), dp(4), dp(4), dp(4)) }
+            val scroll = ScrollView(this).apply { addView(list); isVerticalScrollBarEnabled = true; background = pressBg(d, BG2, LINE, 8f, true) }
+            val H = (resources.configuration.screenHeightDp * d * 0.75f).toInt()
+            val pw = android.widget.PopupWindow(scroll, ViewGroup.LayoutParams.WRAP_CONTENT, minOf(H, all.size * dp(48) + dp(8)), true)
+            for (x in all) list.addView(LinearLayout(this).apply {
+                gravity = Gravity.CENTER_VERTICAL; setPadding(dp(14), dp(4), dp(14), dp(4)); minimumHeight = dp(48); minimumWidth = dp(190)
+                background = pressBg(d, 0x33F59E0B, 0, 6f, x === e, Color.TRANSPARENT)
+                addView(TextView(this@MainActivity).apply { text = x.rhythm.uppercase(); textSize = 18f; typeface = fCond; setTextColor(if (x === e) AMBER2 else INK); letterSpacing = 0.04f }, LinearLayout.LayoutParams(0, -2, 1f))
+                addView(TextView(this@MainActivity).apply { text = "${x.beats}"; textSize = 16f; typeface = fMono; setTextColor(DIM); setPadding(dp(16), 0, 0, 0) })
+                setOnClickListener { pw.dismiss(); if (x !== e) { val was = player != null; stopPlay(); prefs.edit().putString("ex", x.code).apply(); openPlayer(x); if (was) startPlay(x) } }
+            })
+            pw.elevation = dpf(8f); pw.showAsDropDown(anchor, 0, dp(2))
+            all.indexOf(e).let { i -> if (i > 3) scroll.post { scroll.scrollTo(0, (i - 3) * dp(48)) } }
+        }
+        return f
+    }
     private fun setRow(e: Exercise, r: Int) { showRow = r; prefs.edit().putInt("row_" + e.code, r).apply() }
     private fun versionView() = TextView(this).apply {   // upper right: the version; a tap opens the latest release on GitHub
         text = "v" + packageManager.getPackageInfo(packageName, 0).versionName; textSize = 12f; typeface = fMono; setTextColor(DIM); gravity = Gravity.CENTER
@@ -224,6 +249,8 @@ class MainActivity : Activity() {
         } else {
             val portrait = resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE   // portrait: compact controls so the line stays ONE line
             compact = portrait
+            row.addView(rhythmView(e))
+            row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
             row.addView(skipsView(e))
             row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
             row.addView(speedsView(e))
@@ -269,7 +296,7 @@ class MainActivity : Activity() {
             col.addView(TextView(this).apply { text = name.uppercase(); textSize = 18f; typeface = fCond; setTextColor(AMBER); letterSpacing = 0.06f; setPadding(0, dp(20), 0, dp(6)) })
             for (e in list) {
                 val r = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; minimumHeight = dp(56); setPadding(dp(12), dp(8), dp(12), dp(8)); isClickable = true
-                    background = pressBg(d, 0x33F59E0B, LINE, 6f); setOnClickListener { openPlayer(e) } }
+                    background = pressBg(d, 0x33F59E0B, LINE, 6f); setOnClickListener { prefs.edit().putString("ex", e.code).apply(); openPlayer(e) } }
                 // request 15: no exercise code (PH01) anywhere in the interface
                 r.addView(TextView(this).apply { text = e.name.uppercase(); textSize = 18f; typeface = fCond; setTextColor(INK); letterSpacing = 0.06f })
                 col.addView(r, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) })
@@ -308,7 +335,7 @@ class MainActivity : Activity() {
             val tg = titleGroups(e.name)
             for ((ri, row) in e.rows.withIndex()) {
                 if (ri != showRow) continue                                // request 12: one phrase on screen, the rest hidden
-                val cv = CellsView(this, row, spoons(row, tg), if (wide) 16 else 8, fBody, fMono)
+                val cv = CellsView(this, row, spoons(row, tg, e.beats), if (e.beats <= 12) e.beats else 8, fBody, fMono)   // request 23: one bar per line (Shiftatelli 16 = two lines of 8 per bar)
                 cells.add(cv)
                 rowsBox.addView(cv, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(10) })
                 labs.add(TextView(this).apply { text = info[ri].lab; textSize = if (wide) 34f else 30f; typeface = fBody; setTextColor(AMBER); gravity = Gravity.CENTER_VERTICAL; includeFontPadding = false })

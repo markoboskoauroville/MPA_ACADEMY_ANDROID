@@ -38,9 +38,10 @@ fun groupStarts(row: List<String>, tg: List<Int>? = null): List<Int> {
 }
 
 /** spoons() of lessons.js for a phrasing item: restart at every group start. */
-fun spoons(row: List<String>, tg: List<Int>? = null): IntArray {
-    val g = groupStarts(row, tg).toSet(); var n = 0
-    return IntArray(row.size) { j -> n = if (g.contains(j) || j == 0) 1 else n + 1; n }
+fun spoons(row: List<String>, tg: List<Int>? = null, bar1: Int = 0): IntArray {
+    // request 23: bar 1 is the traditional rhythm: its numbers restart on every accent (the site's spoons); bar 2 by groups
+    val g = (groupStarts(row, tg).filter { it >= bar1 } + (0 until bar1).filter { isAcc(row[it]) }).toSet(); var n = 0
+    return IntArray(row.size) { j -> n = if (g.contains(j) || j == 0 || j == bar1) 1 else n + 1; n }
 }
 
 class PhrInfo(val n: Int, val lab: String, val head: Boolean, val rev: Boolean)

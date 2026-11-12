@@ -6,7 +6,8 @@ import android.media.AudioFormat
 import android.media.AudioTrack
 
 /** One exercise: rows of cells, each row played `loops` times, then the next row, round and round. */
-class Exercise(val code: String, val name: String, val base: Int, @Volatile var loops: Int, val notes: String, val rows: List<List<String>>)   // loops: 0 = forever; read live every cell
+class Exercise(val code: String, val name: String, val base: Int, @Volatile var loops: Int, val notes: String, val rows: List<List<String>>,
+               val rhythm: String = name, val beats: Int = (rows.firstOrNull()?.size ?: 16) / 2)   // request 23: the traditional rhythm of bar 1 and its number of beats   // loops: 0 = forever; read live every cell
 
 /** Pre-mixed strokes, 16 bit mono 48 kHz, the site's own samples. */
 class Bank(ctx: Context, set: String) {
