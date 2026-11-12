@@ -61,3 +61,7 @@ Marko, verbatim (dictated; spellings kept): "Remove the voice option altogether.
 ## Request 19 (12.11.2026)
 Marko, verbatim (dictated): "Please update the icon to change the orientation of the screen. It just should represent the orientation of the screen. Simple square, or rectangle better to say, simple rectangle, switching orientations. I don't like this arrow, it doesn't do anything for me. Also lower numbers, one should always be in bold and the rest normal. and the reverse dynamics please write not under the exercise name next to the switcher of exercises in oarenthesis and since there is only one access in this application, it can start automatically without any choice at the beginning and please make a look at drop down menu with choices 1 2 4 8 16 32 make sure you remember settings between sessions"
 **Status:** v22 (read "one access" as "one exercise"; "make a look at drop down menu" as: the speed becomes a drop-down).
+
+## Request 20 (12.11.2026)
+Marko, verbatim: "loop number should also have drop-down menu and screen orientation make it grey color, not orange" / "And last, I was referring, when I said 1, 2, 4, 8, 16, 32, I was referring to loops, not to speed. But you made the drop-down menu to speed, which is happy, accident, looks good, but now transfer this drop-down menu to loops, to the loops." / "stop testing and build new version then test"
+**Status:** v24: loops drop-down 1 2 4 8 16 32 (the speed drop-down stays), orientation rectangle grey.

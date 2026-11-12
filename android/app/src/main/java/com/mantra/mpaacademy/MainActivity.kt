@@ -176,17 +176,23 @@ class MainActivity : Activity() {
         }
         return f
     }
-    private fun loopsView(e: Exercise): View {    // repetitions of every part, changeable live (0 = forever)
-        val f = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-        val n = TextView(this).apply { textSize = 18f; typeface = fCond; setTextColor(AMBER2); gravity = Gravity.CENTER }
-        val lab = TextView(this).apply { text = if (compact) "" else "LOOPS"; textSize = if (compact) 1f else 10f; typeface = fCondS; setTextColor(DIM); letterSpacing = 0.08f; gravity = Gravity.CENTER }
-        val mid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; minimumWidth = dp(if (compact) 22 else 46); if (!compact) addView(lab); addView(n) }
-        fun show() { n.text = if (e.loops == 0) "\u221E" else "${e.loops}" }
-        fun set(v: Int) { e.loops = v.coerceIn(0, 99); prefs.edit().putInt("loops", e.loops).apply(); show() }
-        show()
-        f.addView(pipe("\u2212", false) { set(if (e.loops == 0) 99 else e.loops - 1) }.apply { textSize = 22f; minimumWidth = dp(if (compact) 26 else 40); setPadding(0, dp(4), 0, dp(4)) })
-        f.addView(mid)
-        f.addView(pipe("+", false) { set(if (e.loops >= 99) 0 else e.loops + 1) }.apply { textSize = 22f; minimumWidth = dp(if (compact) 26 else 40); setPadding(0, dp(4), 0, dp(4)) })
+    private fun loopsView(e: Exercise): View {    // request 20: loops are a drop-down of 1 2 4 8 16 32, changeable live, remembered
+        val all = listOf(1, 2, 4, 8, 16, 32)
+        val f = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(dp(6), 0, dp(4), 0); minimumHeight = dp(48); background = pressBg(d, 0x33F59E0B, 0, 6f); contentDescription = "Loops" }
+        fun lab(n: Int, big: Boolean) = TextView(this).apply { text = if (n == 0) "\u221E" else "$n"; textSize = if (big) 20f else 22f; typeface = fCond; setTextColor(AMBER2); gravity = Gravity.CENTER; includeFontPadding = false }
+        f.addView(lab(e.loops, true))
+        f.addView(TextView(this).apply { text = "\u25BE"; textSize = 14f; setTextColor(AMBER2); setPadding(dp(4), 0, 0, 0) })
+        f.setOnClickListener { anchor ->
+            val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(4), dp(4), dp(4), dp(4)); background = pressBg(d, BG2, LINE, 8f, true) }
+            val pw = android.widget.PopupWindow(list, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
+            for (n in all) list.addView(LinearLayout(this).apply {
+                gravity = Gravity.CENTER; setPadding(dp(22), dp(6), dp(22), dp(6)); minimumHeight = dp(48); minimumWidth = dp(64)
+                background = pressBg(d, 0x33F59E0B, 0, 6f, n == e.loops, Color.TRANSPARENT)
+                addView(lab(n, false))
+                setOnClickListener { pw.dismiss(); if (n != e.loops) { e.loops = n; prefs.edit().putInt("loops", n).apply(); openPlayer(e, true) } }
+            })
+            pw.elevation = dpf(8f); pw.showAsDropDown(anchor, 0, dp(2))
+        }
         return f
     }
     private fun skipsView(e: Exercise): View {     // request 18: skip buttons like a cassette deck's, the phrase title between them

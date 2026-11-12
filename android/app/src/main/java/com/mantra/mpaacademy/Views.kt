@@ -180,7 +180,7 @@ class SkipView(ctx: Context, private val next: Boolean, private val enabled: Boo
 /** The orientation switch: a plain rectangle shaped like the screen now (tall in portrait, wide in landscape). */
 class OrientView(ctx: Context, private val landscape: Boolean) : View(ctx) {
     private val d = resources.displayMetrics.density
-    private val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 2 * d; color = AMBER }
+    private val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 2 * d; color = DIM }   // request 20: grey, not orange
     init { isClickable = true; background = pressBg(d, 0x33F59E0B, 0, 6f) }
     override fun onDraw(c: Canvas) {
         val w = (if (landscape) 26 else 16) * d; val h = (if (landscape) 16 else 26) * d
