@@ -28,3 +28,12 @@ v4 to v12 (10.11.2026, requests 4 to 11 in momentaryupdates.md): icon = the webs
 - v19: portrait compact (V | D, no LOOPS caption, rotate icon).
 - v20: speed as one stacked fraction (16 over a straight line over 4) with arrows left and right.
 - Checked on the Pixel 7 by screenshot (landscape v20; portrait v19).
+
+## v21 (12.11.2026, request 18)
+- Voice removed: assets/voice deleted, no VOICE|DRUM switch, Bank always "drum".
+- Cells: the upper number row is gone; the numbers (the spoons: group counts) are below the cells at 20 dp (was 10) and light amber/bold with the cell that sounds.
+- Grouping (Views.kt groupStarts/spoons): numbers in the exercise TITLE decide ("7+3", "7 plus 3", "3+3+2": titleGroups()); otherwise by strokes: restart at D, at row start, at T/P after a ghost note or after D. K never restarts, it only fills a group up. Accent bar unchanged (any played stroke).
+- Top frame: skip buttons (cassette-deck shapes, SkipView) with the phrase title between them, previous/next phrase, playing continues from the new phrase. "Reverse dynamics" is written small under the title at the top (the "Reverse dynamics:" line in the cells is gone).
+- Remembered between sessions (getPreferences): speed, loops, orientation, current phrase per exercise.
+- Version "vN" in the upper right of the top bar (and so of settings); tap opens https://github.com/markoboskoauroville/MPA_ACADEMY_ANDROID/releases/latest. NOT done: version drawn under the launcher icon (manifest version-visible.md section 2) - next.
+- Not checked yet at the time of writing: portrait width of the one-line top bar on the A142 phone.

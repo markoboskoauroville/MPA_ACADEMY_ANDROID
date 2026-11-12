@@ -20,21 +20,33 @@ const val GREEN = 0xFF3FB950.toInt()
 
 fun isAcc(c: String) = c.isNotEmpty() && c[0] != '-'
 
-/** groupStarts() of lessons.js: a new group at every DUM, after a ghost note and after a DUM. */
-fun groupStarts(row: List<String>): List<Int> = row.indices.filter { j ->
-    isAcc(row[j]) && (row[j][0].uppercaseChar() == 'D' || j == 0 || !isAcc(row[j - 1]) || row[j - 1][0].uppercaseChar() == 'D')
+/** Group sizes written in an exercise's title ("7 + 3", "7 plus 3", "3+3+2"), or null when the title has none (request 18). */
+fun titleGroups(name: String): List<Int>? {
+    val m = Regex("(\\d+)(\\s*(?:\\+|plus)\\s*\\d+)+", RegexOption.IGNORE_CASE).find(name) ?: return null
+    return Regex("\\d+").findAll(m.value.replace(Regex("plus", RegexOption.IGNORE_CASE), "+")).map { it.value.toInt() }.toList().takeIf { it.size > 1 && it.all { n -> n > 0 } }
+}
+
+/** Where a group of the row starts. The title's own numbers decide when it has them; otherwise the strokes do:
+ *  a new group at every DUM (D), at the first stroke of a row, at a strong stroke (T, P) after a ghost note and after a DUM.
+ *  K only fills a group up: it never restarts the numbers. */
+fun groupStarts(row: List<String>, tg: List<Int>? = null): List<Int> {
+    if (tg != null && row.size % tg.sum() == 0) return (0 until row.size / tg.sum()).flatMap { r -> var x = r * tg.sum(); tg.map { g -> x.also { x += g } } }
+    return row.indices.filter { j ->
+        val c = if (row[j].isEmpty()) ' ' else row[j][0].uppercaseChar()
+        isAcc(row[j]) && (j == 0 || c == 'D' || (c != 'K' && (!isAcc(row[j - 1]) || row[j - 1][0].uppercaseChar() == 'D')))
+    }
 }
 
 /** spoons() of lessons.js for a phrasing item: restart at every group start. */
-fun spoons(row: List<String>): IntArray {
-    val g = groupStarts(row).toSet(); var n = 0
+fun spoons(row: List<String>, tg: List<Int>? = null): IntArray {
+    val g = groupStarts(row, tg).toSet(); var n = 0
     return IntArray(row.size) { j -> n = if (g.contains(j) || j == 0) 1 else n + 1; n }
 }
 
-class PhrInfo(val n: Int, val lab: String, val head: Boolean)
+class PhrInfo(val n: Int, val lab: String, val head: Boolean, val rev: Boolean)
 
-/** phrInfo() of lessons.js: the groups of bar 2 ("7+1") and the "Reverse dynamics:" heading. */
-fun phrInfo(rows: List<List<String>>): List<PhrInfo> {
+/** phrInfo() of lessons.js: the groups of bar 2 ("7+1") and the "Reverse dynamics" section. */
+fun phrInfo(rows: List<List<String>>, tg: List<Int>? = null): List<PhrInfo> {
     var sec = 0; var n = 0; var brk = false
     return rows.map { row ->
         if (brk) { sec = 1; n = 0; brk = false }
@@ -42,7 +54,7 @@ fun phrInfo(rows: List<List<String>>): List<PhrInfo> {
         val sz = st.mapIndexed { k, x -> (if (k + 1 < st.size) st[k + 1] else h.size) - x }
         val lead = if (h.isNotEmpty() && !isAcc(h[0])) listOf(if (st.isNotEmpty()) st[0] else h.size) else emptyList()
         val g = lead + sz; n++
-        val o = PhrInfo(n, if (g.size > 1) g.joinToString("+") else (g.firstOrNull() ?: h.size).toString(), sec == 1 && n == 1)
+        val o = PhrInfo(n, if (g.size > 1) g.joinToString("+") else (g.firstOrNull() ?: h.size).toString(), sec == 1 && n == 1, sec == 1)
         if (g.size == 1 && sec == 0) brk = true
         o
     }
@@ -54,14 +66,15 @@ class CellsView(ctx: Context, private val row: List<String>, private val sp: Int
     var lit = -1
         set(v) { if (v != field) { field = v; invalidate() } }
     private val d = resources.displayMetrics.density
-    private val numH = 14 * d
+    private val numH = 0f
+    private val numB = 28 * d    // the numbers live below the cells, double size (20 instead of 10)
     private var cw = 0f; private var ch = 0f
     private val box = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = d; color = INK }
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val txt = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER; typeface = fLetter }
-    private val num = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER; typeface = fMono; color = DIM; textSize = 10 * d }
+    private val num = Paint(Paint.ANTI_ALIAS_FLAG).apply { textAlign = Paint.Align.CENTER; typeface = fMono; color = DIM; textSize = 20 * d }
     fun lineCount() = lines
-    private fun pitch() = ch + 2 * numH + 6 * d
+    private fun pitch() = ch + numB + 6 * d
     private val lines get() = (row.size + cols - 1) / cols
     override fun onMeasure(w: Int, h: Int) {
         val W = MeasureSpec.getSize(w).toFloat()
@@ -81,8 +94,8 @@ class CellsView(ctx: Context, private val row: List<String>, private val sp: Int
             txt.color = if (on) BG else INK; txt.textSize = ch * 0.54f
             val bl = top + ch / 2 - (txt.ascent() + txt.descent()) / 2
             c.drawText(row[j], x + cw / 2, bl, txt)
-            c.drawText("${j + 1}", x + cw / 2, top - 3 * d, num)
-            c.drawText("${sp[j]}", x + cw / 2, top + ch + 3 * d + 10 * d, num)
+            num.color = if (on) AMBER else DIM; num.typeface = if (on) Typeface.create(fMono, Typeface.BOLD) else fMono   // the number lights with its cell
+            c.drawText("${sp[j]}", x + cw / 2, top + ch + 4 * d - num.ascent(), num)
         }
     }
     /** vertical centre of one line of cells, inside this view (the marker sits on the line being played) */
@@ -144,5 +157,21 @@ fun pressBg(d: Float, fillOn: Int, stroke: Int, radius: Float, on: Boolean = fal
     return StateListDrawable().apply {
         addState(intArrayOf(android.R.attr.state_pressed), g(fillOn))
         addState(intArrayOf(), g(if (on) fillOn else fillOff))
+    }
+}
+
+/** A cassette deck's skip button: a bar and two triangles, pointing back or forward (request 18). */
+class SkipView(ctx: Context, private val next: Boolean, private val enabled: Boolean) : View(ctx) {
+    private val d = resources.displayMetrics.density
+    private val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    init { isClickable = enabled; background = pressBg(d, 0x33F59E0B, 0, 6f) }
+    override fun onDraw(c: Canvas) {
+        p.color = if (enabled) AMBER2 else SLATE
+        val w = width.toFloat(); val h = height.toFloat(); val s = minOf(w * 0.78f, 24 * d); val t = minOf(h * 0.42f, 9 * d)
+        val l = (w - s) / 2f; val cy = h / 2f
+        val tri = s * 0.36f; val bar = 2.5f * d
+        fun tri(x0: Float) = Path().apply { if (next) { moveTo(x0, cy - t); lineTo(x0 + tri, cy); lineTo(x0, cy + t) } else { moveTo(x0 + tri, cy - t); lineTo(x0, cy); lineTo(x0 + tri, cy + t) }; close() }
+        if (next) { c.drawPath(tri(l), p); c.drawPath(tri(l + tri), p); c.drawRect(l + 2 * tri + 1.5f * d, cy - t, l + 2 * tri + 1.5f * d + bar, cy + t, p) }
+        else { c.drawRect(l, cy - t, l + bar, cy + t, p); c.drawPath(tri(l + bar + 1.5f * d), p); c.drawPath(tri(l + bar + 1.5f * d + tri), p) }
     }
 }

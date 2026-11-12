@@ -31,7 +31,9 @@ class MainActivity : Activity() {
 
     // state kept across rotation
     private var cur: Exercise? = null
-    private var speed = 4; private var voice = true; private var notesOn = false   // request 14: VOICE by default, no notes
+    private var speed = 4; private var notesOn = false   // request 18: drum sounds only, no voice, no switch
+    private val prefs get() = getPreferences(MODE_PRIVATE)   // request 18: every setting is remembered between sessions
+    private val RELEASES = "https://github.com/markoboskoauroville/MPA_ACADEMY_ANDROID/releases/latest"
     private var tele = true                       // TELEPROMPTER always on (request 14: no switch)
     private var player: Player? = null
     private var padL = 0; private var padR = 0; private var lastW = -1
@@ -57,6 +59,8 @@ class MainActivity : Activity() {
         fBody = tf(R.font.barlow_regular); fBodyM = tf(R.font.barlow_medium); fCond = tf(R.font.barlow_condensed_bold)
         fCondS = tf(R.font.barlow_condensed_semibold); fMono = tf(R.font.plex_mono)
         tele = true
+        speed = prefs.getInt("speed", 4).let { if (it in listOf(1, 2, 4, 8, 16, 32)) it else 4 }
+        when (prefs.getInt("orient", 0)) { 1 -> requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE; 2 -> requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT }
         val j = JSONObject(assets.open("exercises.json").bufferedReader().readText())
         val ca = j.getJSONArray("categories")
         for (i in 0 until ca.length()) {
@@ -66,7 +70,7 @@ class MainActivity : Activity() {
                 l.add(Exercise(e.getString("code"), e.getString("name"), e.getInt("base"), e.getInt("loops"), e.getString("notes"),
                     (0 until ra.length()).map { r -> val x = ra.getJSONArray(r); (0 until x.length()).map { x.getString(it) } }))
             }
-            l.forEach { it.loops = getPreferences(MODE_PRIVATE).getInt("loops", it.loops) }
+            l.forEach { it.loops = prefs.getInt("loops", it.loops) }
             cats.add(c.getString("name") to l)
         }
         root = FrameLayout(this).apply { setBackgroundColor(BG) }
@@ -131,11 +135,12 @@ class MainActivity : Activity() {
         val landscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         return pill(if (landscape) "Portrait" else "Landscape", true) {
             requestedOrientation = if (landscape) ActivityInfo.SCREEN_ORIENTATION_PORTRAIT else ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            prefs.edit().putInt("orient", if (landscape) 2 else 1).apply()
         }.apply { alpha = 1f; contentDescription = "Switch to " + (if (landscape) "portrait" else "landscape") }
     }
     private fun titleView(e: Exercise? = null) = TextView(this).apply {
         // request 12: the current phrase ("6+2") sits next to the title
-        val lab = e?.let { phrInfo(it.rows).getOrNull(showRow)?.lab }
+        val lab = e?.let { phrInfo(it.rows, titleGroups(it.name)).getOrNull(showRow)?.lab }
         val head = e?.name?.uppercase() ?: "MPA ACADEMY"              // request 14: the exercise's name is the title in the player
         val s = SpannableString(if (lab.isNullOrEmpty()) head else "$head   $lab")
         if (!lab.isNullOrEmpty()) {
@@ -146,16 +151,16 @@ class MainActivity : Activity() {
     private fun speedsView(e: Exercise): View {   // request 17: ◀ one speed ▶, the speed as a real stacked fraction (16 over a straight line over 4)
         val all = listOf(1, 2, 4, 8, 16, 32)
         val f = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-        fun step(k: Int) { val i = (all.indexOf(speed).coerceAtLeast(0) + k).coerceIn(0, all.size - 1); if (all[i] != speed) { speed = all[i]; openPlayer(e, true); restartIfPlaying() } }
+        fun step(k: Int) { val i = (all.indexOf(speed).coerceAtLeast(0) + k).coerceIn(0, all.size - 1); if (all[i] != speed) { speed = all[i]; prefs.edit().putInt("speed", speed).apply(); openPlayer(e, true); restartIfPlaying() } }
         val i = all.indexOf(speed)
-        f.addView(pipe("\u25C0", i > 0) { step(-1) }.apply { textSize = 16f; minimumWidth = dp(36); setPadding(dp(2), dp(4), dp(2), dp(4)) })
+        f.addView(pipe("\u25C0", i > 0) { step(-1) }.apply { textSize = 16f; minimumWidth = dp(if (compact) 28 else 36); setPadding(dp(1), dp(4), dp(1), dp(4)) })
         val frac = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; setPadding(dp(4), 0, dp(4), 0) }
         fun num(n: Int) = TextView(this).apply { text = "$n"; textSize = 15f; typeface = fCond; setTextColor(AMBER2); gravity = Gravity.CENTER; includeFontPadding = false }
         frac.addView(num(16))
         frac.addView(View(this).apply { setBackgroundColor(AMBER2) }, LinearLayout.LayoutParams(dp(22), dp(2)).apply { topMargin = dp(2); bottomMargin = dp(2) })
         frac.addView(num(speed))
         f.addView(frac, LinearLayout.LayoutParams(-2, -2).apply { marginStart = dp(2); marginEnd = dp(2) })
-        f.addView(pipe("\u25B6", i < all.size - 1) { step(1) }.apply { textSize = 16f; minimumWidth = dp(36); setPadding(dp(2), dp(4), dp(2), dp(4)) })
+        f.addView(pipe("\u25B6", i < all.size - 1) { step(1) }.apply { textSize = 16f; minimumWidth = dp(if (compact) 28 else 36); setPadding(dp(1), dp(4), dp(1), dp(4)) })
         return f
     }
     private fun loopsView(e: Exercise): View {    // repetitions of every part, changeable live (0 = forever)
@@ -164,19 +169,32 @@ class MainActivity : Activity() {
         val lab = TextView(this).apply { text = if (compact) "" else "LOOPS"; textSize = if (compact) 1f else 10f; typeface = fCondS; setTextColor(DIM); letterSpacing = 0.08f; gravity = Gravity.CENTER }
         val mid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER; minimumWidth = dp(if (compact) 22 else 46); if (!compact) addView(lab); addView(n) }
         fun show() { n.text = if (e.loops == 0) "\u221E" else "${e.loops}" }
-        fun set(v: Int) { e.loops = v.coerceIn(0, 99); getPreferences(MODE_PRIVATE).edit().putInt("loops", e.loops).apply(); show() }
+        fun set(v: Int) { e.loops = v.coerceIn(0, 99); prefs.edit().putInt("loops", e.loops).apply(); show() }
         show()
-        f.addView(pipe("\u2212", false) { set(if (e.loops == 0) 99 else e.loops - 1) }.apply { textSize = 22f; minimumWidth = dp(if (compact) 28 else 40); setPadding(0, dp(4), 0, dp(4)) })
+        f.addView(pipe("\u2212", false) { set(if (e.loops == 0) 99 else e.loops - 1) }.apply { textSize = 22f; minimumWidth = dp(if (compact) 26 else 40); setPadding(0, dp(4), 0, dp(4)) })
         f.addView(mid)
-        f.addView(pipe("+", false) { set(if (e.loops >= 99) 0 else e.loops + 1) }.apply { textSize = 22f; minimumWidth = dp(if (compact) 28 else 40); setPadding(0, dp(4), 0, dp(4)) })
+        f.addView(pipe("+", false) { set(if (e.loops >= 99) 0 else e.loops + 1) }.apply { textSize = 22f; minimumWidth = dp(if (compact) 26 else 40); setPadding(0, dp(4), 0, dp(4)) })
         return f
     }
-    private fun soundView(e: Exercise): View {     // request 14: VOICE | DRUM lives in the top frame
+    private fun skipsView(e: Exercise): View {     // request 18: skip buttons like a cassette deck's, the phrase title between them
+        val info = phrInfo(e.rows, titleGroups(e.name)); val cur = info.getOrNull(showRow)
         val f = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-        f.addView(pipe(if (compact) "V" else "VOICE", voice) { voice = true; openPlayer(e, true); restartIfPlaying() }.apply { if (compact) { minimumWidth = dp(26); setPadding(dp(2), dp(4), dp(2), dp(4)) } })
-        if (!compact) f.addView(bar())
-        f.addView(pipe(if (compact) "D" else "DRUM", !voice) { voice = false; openPlayer(e, true); restartIfPlaying() }.apply { if (compact) { minimumWidth = dp(26); setPadding(dp(2), dp(4), dp(2), dp(4)) } })
+        fun skip(k: Int) { val n = (showRow + k).coerceIn(0, e.rows.size - 1); if (n != showRow) { setRow(e, n); openPlayer(e, true); restartIfPlaying() } }
+        val w = dp(if (compact) 28 else 40)
+        f.addView(SkipView(this, false, showRow > 0).apply { setOnClickListener { skip(-1) }; contentDescription = "Previous exercise" }, LinearLayout.LayoutParams(w, dp(44)))
+        val mid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; minimumWidth = dp(if (compact) 26 else 44) }
+        mid.addView(TextView(this).apply { text = cur?.lab ?: ""; textSize = if (compact) 20f else 24f; typeface = fCond; setTextColor(AMBER); gravity = Gravity.CENTER; includeFontPadding = false })
+        // reverse dynamics is written here, at the top, never down among the cells
+        if (cur?.rev == true) mid.addView(TextView(this).apply { text = if (compact) "REVERSE\nDYNAMICS" else "REVERSE DYNAMICS"; textSize = if (compact) 6.5f else 10f; typeface = fCondS; setTextColor(DIM); gravity = Gravity.CENTER; includeFontPadding = false; letterSpacing = 0.04f })
+        f.addView(mid)
+        f.addView(SkipView(this, true, showRow < e.rows.size - 1).apply { setOnClickListener { skip(1) }; contentDescription = "Next exercise" }, LinearLayout.LayoutParams(w, dp(44)))
         return f
+    }
+    private fun setRow(e: Exercise, r: Int) { showRow = r; prefs.edit().putInt("row_" + e.code, r).apply() }
+    private fun versionView() = TextView(this).apply {   // upper right: the version; a tap opens the latest release on GitHub
+        text = "v" + packageManager.getPackageInfo(packageName, 0).versionName; textSize = 12f; typeface = fMono; setTextColor(DIM); gravity = Gravity.CENTER
+        setPadding(dp(6), dp(2), dp(2), dp(2)); minHeight = dp(44)
+        setOnClickListener { try { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(RELEASES))) } catch (_: Exception) { Toast.makeText(this@MainActivity, "No browser", Toast.LENGTH_SHORT).show() } }
     }
     private fun topBar(e: Exercise? = null): View {
         // request 16: the upper frame is ONE line: phrase label, speeds, loops, voice | drum, portrait/landscape (no exercise title)
@@ -188,17 +206,15 @@ class MainActivity : Activity() {
         } else {
             val portrait = resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE   // portrait: compact controls so the line stays ONE line
             compact = portrait
-            val lab = phrInfo(e.rows).getOrNull(showRow)?.lab ?: ""
-            row.addView(TextView(this).apply { text = lab; textSize = if (portrait) 20f else 24f; typeface = fCond; setTextColor(AMBER); gravity = Gravity.CENTER_VERTICAL; minHeight = dp(48); includeFontPadding = false })
+            row.addView(skipsView(e))
             row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
             row.addView(speedsView(e))
             row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
             row.addView(loopsView(e))
             row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
-            row.addView(soundView(e))
-            row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
-            row.addView(orientPill().apply { (this as TextView).minHeight = dp(40); if (compact) { text = "\u21BB"; textSize = 18f; minimumWidth = dp(40); setPadding(dp(4), dp(2), dp(4), dp(2)) } else setPadding(dp(10), dp(2), dp(10), dp(2)) })
+            row.addView(orientPill().apply { (this as TextView).minHeight = dp(40); if (compact) { text = "\u21BB"; textSize = 18f; minimumWidth = dp(34); setPadding(dp(2), dp(2), dp(2), dp(2)) } else setPadding(dp(10), dp(2), dp(10), dp(2)) })
         }
+        row.addView(versionView())
         col.addView(row)
         col.addView(View(this).apply { setBackgroundColor(LINE); layoutParams = LinearLayout.LayoutParams(-1, 1) })
         return col
@@ -214,7 +230,6 @@ class MainActivity : Activity() {
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(16), 0, dp(16)) }
         col.addView(label("Settings"))
         val r = Flow(this, dp(12), 0)
-        col.addView(label("Version ${packageManager.getPackageInfo(packageName, 0).versionName}").apply { setPadding(0, dp(12), 0, 0) })
         col.addView(pill("Back", true) { if (cur != null) openPlayer(cur!!) else home() }.apply { alpha = 1f }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(16) })
         box.addView(ScrollView(this).apply { addView(col); isVerticalScrollBarEnabled = false }, LinearLayout.LayoutParams(-1, 0, 1f))
         box.addView(TextView(this).apply { text = "\u00A9 2026 Mantra Productions"; textSize = 13f; typeface = fBody; setTextColor(DIM); gravity = Gravity.CENTER; setPadding(0, dp(8), 0, dp(4)) }, LinearLayout.LayoutParams(-1, -2))
@@ -250,7 +265,7 @@ class MainActivity : Activity() {
         val was = sv?.scrollY ?: 0
         inSettings = false
         val wasPlaying = player != null
-        if (e !== cur) showRow = 0                    // a new exercise starts at its first phrase
+        if (e !== cur) showRow = prefs.getInt("row_" + e.code, 0).coerceIn(0, e.rows.size - 1)                    // a new exercise starts at its first phrase
         if (!keepScroll) { stopPlay(); curRow = showRow; curLine = 0; lastRow = -1; lastLine = -1 } else { ticker?.let { root.removeCallbacks(it) }; ticker = null }
         if (keepScroll) { lr = -1; lj = -1; lastRow = -1; lastLine = -1 }
         cur = e; root.removeAllViews()
@@ -270,11 +285,11 @@ class MainActivity : Activity() {
             val gutter = if (wide) dp(140) else dp(80)
             labX = if (wide) dp(52) else 0
             val rowsBox = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(gutter, dp(14), 0, 0) }
-            val info = phrInfo(e.rows)
+            val info = phrInfo(e.rows, titleGroups(e.name))
+            val tg = titleGroups(e.name)
             for ((ri, row) in e.rows.withIndex()) {
                 if (ri != showRow) continue                                // request 12: one phrase on screen, the rest hidden
-                if (info[ri].head) rowsBox.addView(TextView(this).apply { text = "Reverse dynamics:"; textSize = 18f; typeface = fBody; setTextColor(INK); letterSpacing = 0.04f; setPadding(0, dp(22), 0, dp(6)) })
-                val cv = CellsView(this, row, spoons(row), if (wide) 16 else 8, fBody, fMono)
+                val cv = CellsView(this, row, spoons(row, tg), if (wide) 16 else 8, fBody, fMono)
                 cells.add(cv)
                 rowsBox.addView(cv, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(10) })
                 labs.add(TextView(this).apply { text = info[ri].lab; textSize = if (wide) 34f else 30f; typeface = fBody; setTextColor(AMBER); gravity = Gravity.CENTER_VERTICAL; includeFontPadding = false })
@@ -354,7 +369,7 @@ class MainActivity : Activity() {
     private fun togglePlay(e: Exercise) { if (player != null) { stopPlay(); lightsOff() } else startPlay(e) }
 
     private fun startPlay(e: Exercise) {
-        val p = Player(e, Bank(this, if (voice) "voice" else "drum"), speed, showRow) {}   // request 12: continue in sequence from the phrase on screen
+        val p = Player(e, Bank(this, "drum"), speed, showRow) {}   // request 12: continue in sequence from the phrase on screen
         player = p; playV?.on = true; curRow = showRow; curLine = 0; lastRow = -1; lastLine = -1; lr = -1; lj = -1
         placeLabels(); setBtn(btnWantFor(showRow)); if (tele) { midScroll(showRow, false); applyBtn() }     // site: placePlay(el,0); midScroll(el,0,false)
         p.start(); startTicker()
@@ -367,7 +382,7 @@ class MainActivity : Activity() {
                 if (player !== p) return
                 p.heard()?.let { (r, j, _) ->
                     if (r != showRow) {                     // request 12: the next phrase replaces the one on screen, in sequence
-                        showRow = r; curRow = r; curLine = 0; lastLine = -1; lr = -1; lj = -1
+                        setRow(e, r); curRow = r; curLine = 0; lastLine = -1; lr = -1; lj = -1
                         openPlayer(e, keepScroll = true); return
                     }
                     if (r != lr || j != lj) {
