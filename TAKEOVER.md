@@ -49,3 +49,7 @@ v4 to v12 (10.11.2026, requests 4 to 11 in momentaryupdates.md): icon = the webs
 ## v24 (12.11.2026, request 20)
 - Loops: a drop-down (same look as the speed's) with 1, 2, 4, 8, 16, 32; the minus/plus and forever are gone. A value saved earlier that is not in the list (e.g. 14) still shows until changed. Speed drop-down kept (Marko: "looks good").
 - Orientation rectangle grey (DIM), not amber.
+
+## v25 (12.11.2026, request 21)
+- Skip next on the last phrase goes to the first (and previous on the first goes to the last); both buttons are always active. Playing already wrapped (Player: r = (r+1) % rows).
+- "(reverse dynamics)" removed. The title (7+1) is REVERSE = #D7373F (warm dark red) in the reverse half, amber in the normal half.

@@ -65,3 +65,7 @@ Marko, verbatim (dictated): "Please update the icon to change the orientation of
 ## Request 20 (12.11.2026)
 Marko, verbatim: "loop number should also have drop-down menu and screen orientation make it grey color, not orange" / "And last, I was referring, when I said 1, 2, 4, 8, 16, 32, I was referring to loops, not to speed. But you made the drop-down menu to speed, which is happy, accident, looks good, but now transfer this drop-down menu to loops, to the loops." / "stop testing and build new version then test"
 **Status:** v24: loops drop-down 1 2 4 8 16 32 (the speed drop-down stays), orientation rectangle grey.
+
+## Request 21 (12.11.2026)
+Marko, verbatim: "please fix exercise feature when it comes to the end it should start from the beginning and don't write anymore reverse dynamics remove that only the numbers the title of the change so make a different color default color orange is normal dynamics reverse dynamics reverse dynamics should be some different color also warm you choose one maybe dark red"
+**Status:** v25: skip buttons wrap round (last > first, first > last); no "(reverse dynamics)" words; the phrase title (7+1) is dark red (#D7373F) in the reverse half, orange in the normal half.

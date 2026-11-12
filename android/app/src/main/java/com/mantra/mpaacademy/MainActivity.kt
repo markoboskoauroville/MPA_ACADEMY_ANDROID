@@ -198,16 +198,14 @@ class MainActivity : Activity() {
     private fun skipsView(e: Exercise): View {     // request 18: skip buttons like a cassette deck's, the phrase title between them
         val info = phrInfo(e.rows, titleGroups(e.name)); val cur = info.getOrNull(showRow)
         val f = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-        fun skip(k: Int) { val n = (showRow + k).coerceIn(0, e.rows.size - 1); if (n != showRow) { setRow(e, n); openPlayer(e, true); restartIfPlaying() } }
+        fun skip(k: Int) { val n = Math.floorMod(showRow + k, e.rows.size); if (n != showRow) { setRow(e, n); openPlayer(e, true); restartIfPlaying() } }
         val w = dp(if (compact) 28 else 40)
-        f.addView(SkipView(this, false, showRow > 0).apply { setOnClickListener { skip(-1) }; contentDescription = "Previous exercise" }, LinearLayout.LayoutParams(w, dp(44)))
+        f.addView(SkipView(this, false, true).apply { setOnClickListener { skip(-1) }; contentDescription = "Previous exercise" }, LinearLayout.LayoutParams(w, dp(44)))
         val mid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; minimumWidth = dp(if (compact) 26 else 44) }
-        mid.addView(TextView(this).apply { text = cur?.lab ?: ""; textSize = if (compact) 20f else 24f; typeface = fCond; setTextColor(AMBER); gravity = Gravity.CENTER; includeFontPadding = false })
-        // reverse dynamics is written here, at the top, never down among the cells
+        mid.addView(TextView(this).apply { text = cur?.lab ?: ""; textSize = if (compact) 20f else 24f; typeface = fCond; setTextColor(if (cur?.rev == true) REVERSE else AMBER);   // request 21: reverse dynamics = dark red title, no words
+        gravity = Gravity.CENTER; includeFontPadding = false })
         f.addView(mid)
-        f.addView(SkipView(this, true, showRow < e.rows.size - 1).apply { setOnClickListener { skip(1) }; contentDescription = "Next exercise" }, LinearLayout.LayoutParams(w, dp(44)))
-        // request 19: reverse dynamics beside the switcher, in parentheses
-        if (cur?.rev == true) f.addView(TextView(this).apply { text = if (compact) "(reverse\ndynamics)" else "(reverse dynamics)"; textSize = if (compact) 11f else 14f; typeface = fCondS; setTextColor(AMBER); gravity = Gravity.CENTER_VERTICAL; includeFontPadding = false; setLineSpacing(0f, 0.9f); setPadding(dp(2), 0, 0, 0) })
+        f.addView(SkipView(this, true, true).apply { setOnClickListener { skip(1) }; contentDescription = "Next exercise" }, LinearLayout.LayoutParams(w, dp(44)))
         return f
     }
     private fun setRow(e: Exercise, r: Int) { showRow = r; prefs.edit().putInt("row_" + e.code, r).apply() }

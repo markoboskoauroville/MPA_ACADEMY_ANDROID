@@ -16,6 +16,7 @@ const val INK = 0xFFF2DDB4.toInt()
 const val DIM = 0xFF8B8F94.toInt()
 const val AMBER = 0xFFF59E0B.toInt()
 const val AMBER2 = 0xFFFBBF24.toInt()
+const val REVERSE = 0xFFD7373F.toInt()   // request 21: reverse dynamics, a warm dark red
 const val GREEN = 0xFF3FB950.toInt()
 
 fun isAcc(c: String) = c.isNotEmpty() && c[0] != '-'
