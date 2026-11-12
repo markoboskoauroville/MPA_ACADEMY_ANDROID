@@ -36,4 +36,4 @@ v4 to v12 (10.11.2026, requests 4 to 11 in momentaryupdates.md): icon = the webs
 - Top frame: skip buttons (cassette-deck shapes, SkipView) with the phrase title between them, previous/next phrase, playing continues from the new phrase. "Reverse dynamics" is written small under the title at the top (the "Reverse dynamics:" line in the cells is gone).
 - Remembered between sessions (getPreferences): speed, loops, orientation, current phrase per exercise.
 - Version "vN" in the upper right of the top bar (and so of settings); tap opens https://github.com/markoboskoauroville/MPA_ACADEMY_ANDROID/releases/latest. NOT done: version drawn under the launcher icon (manifest version-visible.md section 2) - next.
-- Not checked yet at the time of writing: portrait width of the one-line top bar on the A142 phone.
+- Checked on the A142 (portrait, installed from release v21): top bar fits one line, numbers below lit with the playing cell, reverse caption under the title, skip buttons advance. Not checked: landscape, sound by ear, restart of the app (remembered settings).
