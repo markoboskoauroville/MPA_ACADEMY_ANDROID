@@ -203,9 +203,27 @@ class MainActivity : Activity() {
         fun skip(k: Int) { val n = Math.floorMod(showRow + k, e.rows.size); if (n != showRow) { setRow(e, n); openPlayer(e, true); restartIfPlaying() } }
         val w = dp(if (compact) 28 else 40)
         f.addView(SkipView(this, false, true).apply { setOnClickListener { skip(-1) }; contentDescription = "Previous exercise" }, LinearLayout.LayoutParams(w, dp(44)))
-        val mid = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL; minimumWidth = dp(if (compact) 26 else 44) }
+        // request 24: the phrase title between the skip buttons is a drop-down of every phrase; a tap jumps straight there
+        val mid = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; minimumWidth = dp(if (compact) 26 else 44); minimumHeight = dp(48)
+            setPadding(dp(4), 0, dp(2), 0); background = pressBg(d, 0x33F59E0B, 0, 6f); contentDescription = "Choose exercise" }
         mid.addView(TextView(this).apply { text = cur?.lab ?: ""; textSize = if (compact) 20f else 24f; typeface = fCond; setTextColor(AMBER); if (cur?.rev == true) paintFlags = paintFlags or android.graphics.Paint.UNDERLINE_TEXT_FLAG   // request 22: reverse dynamics = the title is underlined, colour unchanged
         gravity = Gravity.CENTER; includeFontPadding = false })
+        mid.addView(TextView(this).apply { text = "\u25BE"; textSize = 14f; setTextColor(AMBER2); setPadding(dp(3), 0, 0, 0) })
+        mid.setOnClickListener { anchor ->
+            val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(4), dp(4), dp(4), dp(4)) }
+            val scroll = ScrollView(this).apply { addView(list); background = pressBg(d, BG2, LINE, 8f, true) }
+            val itemH = dp(48); val H = (resources.configuration.screenHeightDp * d * 0.75f).toInt()
+            val pw = android.widget.PopupWindow(scroll, ViewGroup.LayoutParams.WRAP_CONTENT, minOf(H, info.size * itemH + dp(8)), true)
+            for ((i, x) in info.withIndex()) list.addView(LinearLayout(this).apply {
+                gravity = Gravity.CENTER; setPadding(dp(22), dp(4), dp(22), dp(4)); minimumHeight = itemH; minimumWidth = dp(84)
+                background = pressBg(d, 0x33F59E0B, 0, 6f, i == showRow, Color.TRANSPARENT)
+                addView(TextView(this@MainActivity).apply { text = x.lab; textSize = 22f; typeface = fCond; setTextColor(if (i == showRow) AMBER2 else AMBER); includeFontPadding = false
+                    if (x.rev) paintFlags = paintFlags or android.graphics.Paint.UNDERLINE_TEXT_FLAG })
+                setOnClickListener { pw.dismiss(); if (i != showRow) { setRow(e, i); openPlayer(e, true); restartIfPlaying() } }
+            })
+            pw.elevation = dpf(8f); pw.showAsDropDown(anchor, 0, dp(2))
+            if (showRow > 3) scroll.post { scroll.scrollTo(0, (showRow - 3) * itemH) }
+        }
         f.addView(mid)
         f.addView(SkipView(this, true, true).apply { setOnClickListener { skip(1) }; contentDescription = "Next exercise" }, LinearLayout.LayoutParams(w, dp(44)))
         return f

@@ -64,3 +64,6 @@ v4 to v12 (10.11.2026, requests 4 to 11 in momentaryupdates.md): icon = the webs
 - 17 exercises, one per traditional rhythm of the site (TR01-TR17), made by `node tools/phrasing-rhythms.mjs` (rewrites assets/exercises.json; fails if Malfuf differs from PH01). Bar 1 = the rhythm (N beats), bar 2 = N split a+b: forward (N-1)+1 ... 1+(N-1), N; reverse N, (N-1)+1 ... 1+(N-1) = 2N phrases. Strong notes by fing(n) (even hand to hand, uneven ends i r).
 - Top bar: RHYTHM drop-down first (name, beats in the list), remembered (prefs "ex", default PH01); the app opens on it. Codes PT01-PT17 (PH01 for Malfuf) are internal, never shown.
 - CellsView cols = beats (<= 12) else 8; bar 1 spoons restart on every accent (spoons(row, tg, bar1)).
+
+## v28 (13.11.2026, request 24)
+- The phrase title between the skip buttons (7+1 ...) is a drop-down (same look as speed/loops) listing every phrase of the rhythm, reverse ones underlined; a tap jumps there (and keeps playing from it).
