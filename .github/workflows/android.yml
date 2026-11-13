@@ -72,6 +72,7 @@ jobs:
           cp "$(ls app/build/outputs/apk/debug/*.apk | head -1)" "$APK"
           if gh release view "v$N" >/dev/null 2>&1; then
             gh release upload "v$N" "$APK" --clobber
+            gh release delete-asset "v$N" app-debug.apk -y 2>/dev/null || true   # an old name left on the release
           else
             gh release create "v$N" "$APK" --target "$GITHUB_SHA" --latest \
               --title "v$N" --notes "Built by GitHub Actions from $GITHUB_SHA. $(git log -1 --format=%s)"
