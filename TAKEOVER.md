@@ -8,7 +8,7 @@ Started 10.11.2026 (request in momentaryupdates.md). Version 1 holds one exercis
 custom:PHRASING, base 20, 16 rows of 2 bars, each row twice). Data: android/app/src/main/assets/exercises.json, generated from
 ~/Developer/MPA/lessons/phrasing-malfuf.mjs. Add an exercise = add it to a category in that file (and its samples if new strokes).
 
-Releases: push to main without asking (Marko, 13.11.2026). The APK is always named MPA-Academy-v<N>.apk, never app-debug.apk (the workflow renames it).
+Releases: push to main without asking (Marko, 13.11.2026). The APK is always named <N>-mpa-academy-v<N>.apk (MANTRA_MANIFEST versioning.md: same number at both ends, made by the build: outputFileName in app/build.gradle.kts), never app-debug.apk.
 
 Build: only GitHub Actions (.github/workflows/android.yml), on a push to main, release v<appVersion> (android/gradle.properties) Latest,
 signed with the secret ANDROID_DEBUG_KEYSTORE_B64. Never gradlew on the Mac. Public and unpromoted: no README, no description.

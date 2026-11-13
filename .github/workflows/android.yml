@@ -58,7 +58,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: MPA-Academy-v${{ steps.v.outputs.n }}
+          name: mpa-academy-v${{ steps.v.outputs.n }}
           path: android/app/build/outputs/apk/debug/*.apk
 
       - name: Release v${{ steps.v.outputs.n }}
@@ -67,12 +67,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           N: ${{ steps.v.outputs.n }}
         run: |
-          # Marko 13.11.2026: never published as app-debug.apk; the file is named MPA-Academy-v<N>.apk
-          APK="$RUNNER_TEMP/MPA-Academy-v$N.apk"
-          cp "$(ls app/build/outputs/apk/debug/*.apk | head -1)" "$APK"
+          # Marko 13.11.2026: never app-debug.apk; the build names it <N>-mpa-academy-v<N>.apk (MANTRA_MANIFEST versioning.md)
+          APK="app/build/outputs/apk/debug/$N-mpa-academy-v$N.apk"
+          test -f "$APK"
           if gh release view "v$N" >/dev/null 2>&1; then
             gh release upload "v$N" "$APK" --clobber
-            gh release delete-asset "v$N" app-debug.apk -y 2>/dev/null || true   # an old name left on the release
+            for old in app-debug.apk "MPA-Academy-v$N.apk"; do gh release delete-asset "v$N" "$old" -y 2>/dev/null || true; done   # old names left on the release
           else
             gh release create "v$N" "$APK" --target "$GITHUB_SHA" --latest \
               --title "v$N" --notes "Built by GitHub Actions from $GITHUB_SHA. $(git log -1 --format=%s)"
