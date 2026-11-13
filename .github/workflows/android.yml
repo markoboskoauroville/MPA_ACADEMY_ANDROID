@@ -58,7 +58,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: apk-v${{ steps.v.outputs.n }}
+          name: MPA-Academy-v${{ steps.v.outputs.n }}
           path: android/app/build/outputs/apk/debug/*.apk
 
       - name: Release v${{ steps.v.outputs.n }}
@@ -67,7 +67,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           N: ${{ steps.v.outputs.n }}
         run: |
-          APK=$(ls app/build/outputs/apk/debug/*.apk | head -1)
+          # Marko 13.11.2026: never published as app-debug.apk; the file is named MPA-Academy-v<N>.apk
+          APK="$RUNNER_TEMP/MPA-Academy-v$N.apk"
+          cp "$(ls app/build/outputs/apk/debug/*.apk | head -1)" "$APK"
           if gh release view "v$N" >/dev/null 2>&1; then
             gh release upload "v$N" "$APK" --clobber
           else
