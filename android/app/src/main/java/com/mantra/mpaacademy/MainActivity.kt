@@ -153,17 +153,17 @@ class MainActivity : Activity() {
             s.setSpan(RelativeSizeSpan(1.35f), s.length - lab.length, s.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
         text = s; textSize = 18f; typeface = fCond; setTextColor(INK); letterSpacing = 0.06f; minHeight = dp(48); gravity = Gravity.CENTER_VERTICAL; background = pressBg(d, 0x33F59E0B, 0, 6f); setOnClickListener { settings() } }
-    private fun fracView(n: Int, big: Boolean = true) = LinearLayout(this).apply {   // 16 over a straight line over n
+    private fun fracView(n: Int, big: Boolean = true, top: Int = 16) = LinearLayout(this).apply {   // request 25: the rhythm's beats (Malfuf 8) over a straight line over n
         orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_HORIZONTAL
         fun num(v: Int) = TextView(this@MainActivity).apply { text = "$v"; textSize = if (big) 15f else 17f; typeface = fCond; setTextColor(AMBER2); gravity = Gravity.CENTER; includeFontPadding = false }
-        addView(num(16))
+        addView(num(top))
         addView(View(this@MainActivity).apply { setBackgroundColor(AMBER2) }, LinearLayout.LayoutParams(dp(22), dp(2)).apply { topMargin = dp(2); bottomMargin = dp(2) })
         addView(num(n))
     }
     private fun speedsView(e: Exercise): View {   // request 19: the speed is a drop-down menu, 16/1 16/2 16/4 16/8 16/16 16/32
         val all = listOf(1, 2, 4, 8, 16, 32)
         val f = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(dp(6), 0, dp(4), 0); minimumHeight = dp(48); background = pressBg(d, 0x33F59E0B, 0, 6f); contentDescription = "Speed" }
-        f.addView(fracView(speed))
+        f.addView(fracView(speed, top = e.beats))
         f.addView(TextView(this).apply { text = "\u25BE"; textSize = 14f; setTextColor(AMBER2); setPadding(dp(4), 0, 0, 0) })
         f.setOnClickListener { anchor ->
             val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(4), dp(4), dp(4), dp(4)); background = pressBg(d, BG2, LINE, 8f, true) }
@@ -171,7 +171,7 @@ class MainActivity : Activity() {
             for (n in all) list.addView(LinearLayout(this).apply {
                 gravity = Gravity.CENTER; setPadding(dp(18), dp(6), dp(18), dp(6)); minimumHeight = dp(52)
                 background = pressBg(d, 0x33F59E0B, 0, 6f, n == speed, Color.TRANSPARENT)
-                addView(fracView(n, false))
+                addView(fracView(n, false, e.beats))
                 setOnClickListener { pw.dismiss(); if (n != speed) { speed = n; prefs.edit().putInt("speed", speed).apply(); openPlayer(e, true); restartIfPlaying() } }
             })
             pw.elevation = dpf(8f); pw.showAsDropDown(anchor, 0, dp(2))

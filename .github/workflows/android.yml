@@ -70,10 +70,13 @@ jobs:
           # Marko 13.11.2026: never app-debug.apk; the build names it <N>-mpa-academy-v<N>.apk (MANTRA_MANIFEST versioning.md)
           APK="app/build/outputs/apk/debug/$N-mpa-academy-v$N.apk"
           test -f "$APK"
+          # MANTRA_MANIFEST download-always-latest.md: the same build also under a fixed name, so
+          # releases/latest/download/MPA-Academy.apk always gives the newest version (the link sent to people)
+          FIXED="$RUNNER_TEMP/MPA-Academy.apk"; cp "$APK" "$FIXED"
           if gh release view "v$N" >/dev/null 2>&1; then
-            gh release upload "v$N" "$APK" --clobber
+            gh release upload "v$N" "$APK" "$FIXED" --clobber
             for old in app-debug.apk "MPA-Academy-v$N.apk"; do gh release delete-asset "v$N" "$old" -y 2>/dev/null || true; done   # old names left on the release
           else
-            gh release create "v$N" "$APK" --target "$GITHUB_SHA" --latest \
+            gh release create "v$N" "$APK" "$FIXED" --target "$GITHUB_SHA" --latest \
               --title "v$N" --notes "Built by GitHub Actions from $GITHUB_SHA. $(git log -1 --format=%s)"
           fi
