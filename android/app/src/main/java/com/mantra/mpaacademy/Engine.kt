@@ -53,7 +53,9 @@ class Player(private val ex: Exercise, private val bank: Bank, speed: Int, priva
     fun start() {
         track.play()
         thread = Thread {
-            val tail = IntArray(rate)           // sample tails running over into the next cell
+            // request 26: the tail must hold one whole cell plus the longest sample; at 16/1 a cell is 3 s, longer than the old fixed 1 s
+            // buffer, and System.arraycopy got a negative length (the crash at speeds x/1 and x/2)
+            val tail = IntArray(stepFrames + (bank.s.values.maxOfOrNull { it.size } ?: 0) + rate)   // sample tails running over into the next cell
             val out = ShortArray(stepFrames)
             var frame = 0L; var r = startRow.coerceIn(0, ex.rows.size - 1)   // request 12: continue in sequence from the phrase on screen
             while (!stopped) {

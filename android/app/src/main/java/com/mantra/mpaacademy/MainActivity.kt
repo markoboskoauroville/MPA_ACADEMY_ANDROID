@@ -182,7 +182,7 @@ class MainActivity : Activity() {
         val all = listOf(1, 2, 4, 8, 16, 32)
         val f = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(dp(6), 0, dp(4), 0); minimumHeight = dp(48); background = pressBg(d, 0x33F59E0B, 0, 6f); contentDescription = "Loops" }
         fun lab(n: Int, big: Boolean) = TextView(this).apply { text = if (n == 0) "\u221E" else "$n"; textSize = if (big) 20f else 22f; typeface = fCond; setTextColor(AMBER2); gravity = Gravity.CENTER; includeFontPadding = false }
-        f.addView(lab(e.loops, true))
+        f.addView(lab(e.loops, true).also { loopsLab = it })   // request 26: counts down while playing
         f.addView(TextView(this).apply { text = "\u25BE"; textSize = 14f; setTextColor(AMBER2); setPadding(dp(4), 0, 0, 0) })
         f.setOnClickListener { anchor ->
             val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(4), dp(4), dp(4), dp(4)); background = pressBg(d, BG2, LINE, 8f, true) }
@@ -283,6 +283,10 @@ class MainActivity : Activity() {
         return col
     }
     private var compact = false
+    private var loopsLab: TextView? = null
+    /** request 26: while playing, the loops number counts down on each repeat of the phrase (8, 7 ... 1) and is full again on the next phrase */
+    private fun showLoopsLeft(rep: Int) { val e = cur ?: return; val l = loopsLab ?: return
+        l.text = if (e.loops == 0) "\u221E" else if (rep <= 0) "${e.loops}" else "${maxOf(1, e.loops - rep + 1)}" }
     private fun shrink(v: View) { if (v is ViewGroup) for (i in 0 until v.childCount) { val c = v.getChildAt(i); if (c is TextView) { c.minimumWidth = dp(if (compact) 22 else 26); c.setPadding(dp(1), 0, dp(1), 0); if (compact) { if (c.text.toString() == "|") c.visibility = View.GONE else c.textSize = 12f } } } }
 
     // ------------------------------------------------------------------ settings (tap the title): one switch and, at the bottom, the copyright line
@@ -327,7 +331,7 @@ class MainActivity : Activity() {
     // ------------------------------------------------------------------ the exercise page, laid out like the site's
     private fun openPlayer(e: Exercise, keepScroll: Boolean = false) {
         val was = sv?.scrollY ?: 0
-        inSettings = false
+        inSettings = false; lastRep = -1   // request 26: the new top bar shows the countdown again from the next tick
         val wasPlaying = player != null
         if (e !== cur) showRow = prefs.getInt("row_" + e.code, 0).coerceIn(0, e.rows.size - 1)                    // a new exercise starts at its first phrase
         if (!keepScroll) { stopPlay(); curRow = showRow; curLine = 0; lastRow = -1; lastLine = -1 } else { ticker?.let { root.removeCallbacks(it) }; ticker = null }
@@ -444,7 +448,8 @@ class MainActivity : Activity() {
         val tick = object : Runnable {
             override fun run() {
                 if (player !== p) return
-                p.heard()?.let { (r, j, _) ->
+                p.heard()?.let { (r, j, rep) ->
+                    if (rep != lastRep) { lastRep = rep; showLoopsLeft(rep) }
                     if (r != showRow) {                     // request 12: the next phrase replaces the one on screen, in sequence
                         setRow(e, r); curRow = r; curLine = 0; lastLine = -1; lr = -1; lj = -1
                         openPlayer(e, keepScroll = true); return
@@ -465,8 +470,9 @@ class MainActivity : Activity() {
         ticker = tick; root.post(tick)
     }
 
-    private fun lightsOff() { cells.forEach { it.lit = -1 }; playV?.on = false }
-    private fun stopPlay() { player?.stop(); player = null; ticker?.let { root.removeCallbacks(it) }; ticker = null; anim?.cancel(); anim = null; playV?.on = false; lr = -1; lj = -1 }
+    private var lastRep = -1
+    private fun lightsOff() { cells.forEach { it.lit = -1 }; playV?.on = false; lastRep = -1; showLoopsLeft(0) }
+    private fun stopPlay() { lastRep = -1; showLoopsLeft(0); player?.stop(); player = null; ticker?.let { root.removeCallbacks(it) }; ticker = null; anim?.cancel(); anim = null; playV?.on = false; lr = -1; lj = -1 }
 
     @Deprecated("back")
     override fun onBackPressed() { if (inSettings) { if (cur != null) openPlayer(cur!!) else home() } else if (cur != null) home() else super.onBackPressed() }

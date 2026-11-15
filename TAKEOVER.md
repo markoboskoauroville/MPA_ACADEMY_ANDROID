@@ -72,3 +72,7 @@ v4 to v12 (10.11.2026, requests 4 to 11 in momentaryupdates.md): icon = the webs
 - Speed fraction: the upper number is the rhythm's beats (Malfuf 8, Kopanitza 11, Shiftatelli 16) over 1..32; playing speed unchanged (60 / base / lower).
 - Numbers under the cells: every 1 bold and 24 dp (the rest 20 dp).
 - Every release also carries MPA-Academy.apk (same build, fixed name): https://github.com/markoboskoauroville/MPA_ACADEMY_ANDROID/releases/latest/download/MPA-Academy.apk always downloads the newest version (the link for people).
+
+## v30 (15.11.2026, request 26)
+- Crash fixed at speeds x/1 and x/2: the player's tail buffer was a fixed 1 s; a cell at 16/1 lasts 3 s (60 / base 20 / 1), so System.arraycopy got a negative length. The buffer is now one cell + the longest sample + 1 s.
+- The loops number in the top bar counts down while playing (8, 7 ... 1 for the repeats of the phrase), full again on the next phrase and when stopped.
