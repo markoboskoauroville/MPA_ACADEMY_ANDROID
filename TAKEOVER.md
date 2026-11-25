@@ -1,6 +1,6 @@
 # MPA Academy (Mantra), Android
 
-What it is: the Android app of the Mantreshwar Percussions Academy (mpa-academy.pages.dev). It holds the Exercise Lab's exercises as
+What it is: the Android app of the Mantreshwar Percussions Academy (mpa.markobosko.org). It holds the Exercise Lab's exercises as
 collections (categories as in the Lab), played with the same drum and voice samples, speeds 16/1 to 16/32 (default 16/4), cells with
 accents, numbers and spoons, the lit cell following the sound, notes. Teacher Mantreshwar, student Natasha, never "Marko" in the app.
 
